@@ -35,11 +35,11 @@
     "typescript": "~6.0.3"
   },
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --port 8090",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
-    "web": "expo start --web",
+    "android": "expo start --android --port 8090",
+    "ios": "expo start --ios --port 8090",
+    "web": "expo start --web --port 8090",
     "lint": "expo lint"
   },
   "private": true
