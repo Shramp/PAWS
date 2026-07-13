@@ -7,11 +7,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { TrackerEditorSheet } from '@/components/tracker-editor-sheet';
 import { Button } from '@/components/ui/button';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { listSubstances } from '@/db/substances';
 import { listTrackers } from '@/db/trackers';
 import { type Substance, type Tracker, type TrackerShape } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
+import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 
 const SHAPE_NAMES: Record<TrackerShape, string> = {
   bool: 'yes / no',
@@ -21,6 +22,7 @@ const SHAPE_NAMES: Record<TrackerShape, string> = {
 };
 
 export default function SettingsScreen() {
+  const bottomPadding = useTabContentPadding();
   const { data, reload } = useDbData(async (db) => {
     const [trackers, substances] = await Promise.all([listTrackers(db, true), listSubstances(db, true)]);
     return { trackers, substances };
@@ -38,7 +40,7 @@ export default function SettingsScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
             TRACKERS
           </ThemedText>
@@ -110,7 +112,6 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.two,
-    paddingBottom: BottomTabInset + Spacing.five,
   },
   sectionTitle: {
     marginTop: Spacing.three,

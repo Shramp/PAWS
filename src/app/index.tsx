@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { NavHeader } from '@/components/ui/nav-header';
 import { PromptSheet } from '@/components/ui/prompt-sheet';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { deleteUsage, listSubstances, usageForDate } from '@/db/substances';
 import {
   addPickOption,
@@ -27,11 +27,13 @@ import {
   type UsageEventWithSubstance,
 } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
+import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { useTheme } from '@/hooks/use-theme';
 import { optionColor, scaleColor } from '@/lib/colors';
 import { addDays, formatTime, friendlyDate, todayKey } from '@/lib/dates';
 
 export default function TodayScreen() {
+  const bottomPadding = useTabContentPadding();
   const [date, setDate] = useState(todayKey());
   const [usageOpen, setUsageOpen] = useState(false);
   const [measureTracker, setMeasureTracker] = useState<Tracker | null>(null);
@@ -100,7 +102,7 @@ export default function TodayScreen() {
           onNext={() => setDate(addDays(date, 1))}
           onPressLabel={date === todayKey() ? undefined : () => setDate(todayKey())}
         />
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
             SUBSTANCES
           </ThemedText>
@@ -324,7 +326,6 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.two,
-    paddingBottom: BottomTabInset + Spacing.five,
   },
   sectionTitle: {
     marginTop: Spacing.three,

@@ -7,13 +7,15 @@ import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
 import { Sheet } from '@/components/ui/sheet';
 import { TextField } from '@/components/ui/text-field';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { addTodo, completeTodo, deleteTodo, listTodos, uncompleteTodo } from '@/db/todos';
 import { type Todo } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
+import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { dateKey, shortDate } from '@/lib/dates';
 
 export default function TodosScreen() {
+  const bottomPadding = useTabContentPadding();
   const { data: todos, reload, db } = useDbData(listTodos);
   const [addOpen, setAddOpen] = useState(false);
   const [completing, setCompleting] = useState<Todo | null>(null);
@@ -45,7 +47,7 @@ export default function TodosScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           <Button label="+ New todo" onPress={() => setAddOpen(true)} />
 
           {open.map((todo) => (
@@ -171,7 +173,6 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.two,
-    paddingBottom: BottomTabInset + Spacing.five,
   },
   card: {
     borderRadius: Spacing.three,

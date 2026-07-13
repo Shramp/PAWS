@@ -6,14 +6,16 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Chip } from '@/components/ui/chip';
 import { NavHeader } from '@/components/ui/nav-header';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { dailyTotals, weeklyTotals } from '@/db/substances';
 import { useDbData } from '@/hooks/use-db-data';
+import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { addDays, friendlyDate, startOfWeekKey, todayKey, weekRangeLabel } from '@/lib/dates';
 
 type Mode = 'day' | 'week';
 
 export default function TotalsScreen() {
+  const bottomPadding = useTabContentPadding();
   const [mode, setMode] = useState<Mode>('day');
   const [date, setDate] = useState(todayKey());
   const weekStart = startOfWeekKey(date);
@@ -43,7 +45,7 @@ export default function TotalsScreen() {
           onNext={() => step(1)}
           onPressLabel={isCurrent ? undefined : () => setDate(todayKey())}
         />
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           {(totals ?? []).length === 0 ? (
             <ThemedText themeColor="textSecondary">
               No usage logged for this {mode}.
@@ -82,7 +84,6 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.two,
-    paddingBottom: BottomTabInset + Spacing.five,
   },
   row: {
     flexDirection: 'row',

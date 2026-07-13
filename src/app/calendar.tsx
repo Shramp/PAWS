@@ -7,15 +7,17 @@ import { ThemedView } from '@/components/themed-view';
 import { Chip } from '@/components/ui/chip';
 import { MonthGrid } from '@/components/ui/month-grid';
 import { NavHeader } from '@/components/ui/nav-header';
-import { BottomTabInset, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 import { entriesInRange, listTrackers } from '@/db/trackers';
 import { type DailyEntry, type MeasureValue, type Tracker } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
+import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { useTheme } from '@/hooks/use-theme';
 import { optionColor, scaleColor } from '@/lib/colors';
 import { dateKey, monthTitle } from '@/lib/dates';
 
 export default function CalendarScreen() {
+  const bottomPadding = useTabContentPadding();
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
@@ -76,7 +78,7 @@ export default function CalendarScreen() {
           ))}
         </ScrollView>
         <NavHeader label={monthTitle(year, month)} onPrev={prevMonth} onNext={nextMonth} />
-        <ScrollView contentContainerStyle={styles.content}>
+        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           {tracker ? (
             <>
               <MonthGrid
@@ -186,7 +188,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
   },
   content: {
-    paddingBottom: BottomTabInset + Spacing.five,
     gap: Spacing.four,
   },
   empty: {
