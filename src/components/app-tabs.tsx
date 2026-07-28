@@ -25,19 +25,9 @@ export default function AppTabs() {
         <NativeTabs.Trigger.Icon sf="sun.max" md="today" />
       </NativeTabs.Trigger>
 
-      <NativeTabs.Trigger name="calendar">
-        <NativeTabs.Trigger.Label>Calendar</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="calendar" md="calendar_month" />
-      </NativeTabs.Trigger>
-
       <NativeTabs.Trigger name="substances">
         <NativeTabs.Trigger.Label>Totals</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf="chart.bar" md="bar_chart" />
-      </NativeTabs.Trigger>
-
-      <NativeTabs.Trigger name="todos">
-        <NativeTabs.Trigger.Label>Todos</NativeTabs.Trigger.Label>
-        <NativeTabs.Trigger.Icon sf="checklist" md="checklist" />
       </NativeTabs.Trigger>
 
       <NativeTabs.Trigger name="settings">

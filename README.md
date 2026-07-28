@@ -1,20 +1,15 @@
 # PAWS 🐾
 
-Personal, offline-only tracking app. All data lives in a local SQLite database on the phone — no server, no network, no sync.
+Personal, offline-only usage tracking app. All data lives in a local SQLite database on the phone — no server, no network, no sync.
 
 ## What it does
 
-- **Substances** — log usage events (timestamp, amount, route) per substance. Each substance has its own unit and administration routes; substances can be flagged *daily-total-only* (one amount per day, no timestamps). Day timeline + daily/weekly totals views.
-- **Daily trackers** — configurable trackers built from four shapes:
-  - *yes / no* (stretch, play with cats, left the house)
-  - *scale* (how was the day: terrible → amazing)
-  - *multi-choice* (exercise categories, growable while logging)
-  - *number + rating* (sleep: hours + poor/fair/good/great)
+- **Log usage events** — timestamp (now or manual), amount, and administration route per substance. Every entry can be backdated.
+- **Substances are config** — each has its own unit (mg, ml, …) and routes (asked when logging only if it has more than one). Substances can be flagged *daily-total-only*: one amount per day, no timestamps.
+- **Views** — chronological day timeline (Today tab) and per-substance daily/weekly totals (Totals tab).
+- **Settings** — add / edit / archive substances in-app.
 
-  New trackers are added in Settings — no code changes needed.
-- **Calendar** — month view per tracker with color-coded days.
-- **Todos** — simple list; completed items keep a note + date and stay visible.
-- Every entry can be backdated (log yesterday's exercise, set a manual time on a usage event).
+Earlier iterations included general daily trackers (sleep, exercise, mood, …), a calendar view, and a todo list — descoped for v1 but recoverable from git history (`640dac9` and earlier).
 
 ## Stack
 
@@ -24,10 +19,10 @@ Expo SDK 57 · React Native · TypeScript · expo-router (native tabs) · expo-s
 
 ```bash
 npm install
-npx expo start --ios      # dev build in the iOS simulator via Expo Go
+npm run ios    # boots the iPhone 13 Pro simulator, starts Metro on port 8090
 ```
 
-Note: use a non-default port (`--port 8090`) if something else occupies 8081.
+Metro runs on port 8090 (8081 is taken locally). `shift+i` in the Metro terminal picks a different simulator.
 
 Checks:
 
@@ -40,12 +35,11 @@ npx expo lint
 
 ```
 src/
-  app/          # one file per tab (expo-router): index (Today), calendar,
-                # substances (Totals), todos, settings
-  components/   # form sheets + ui/ primitives (Chip, Sheet, MonthGrid, …)
-  db/           # schema + migrations, typed query modules
-  hooks/        # useDbData (focus-aware SQLite loader)
-  lib/          # date-key helpers, scale/category colors
+  app/          # one file per tab (expo-router): index (Today), substances (Totals), settings
+  components/   # log-usage & substance-editor sheets + ui/ primitives (Chip, Sheet, …)
+  db/           # schema + migrations (PRAGMA user_version), typed query module
+  hooks/        # useDbData (focus-aware SQLite loader), useTabContentPadding
+  lib/          # date-key helpers
 scripts/
   gen-icons.mjs # regenerates the paw icon set (needs @resvg/resvg-js)
 ```

@@ -5,34 +5,18 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SubstanceEditorSheet } from '@/components/substance-editor-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { TrackerEditorSheet } from '@/components/tracker-editor-sheet';
 import { Button } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
 import { listSubstances } from '@/db/substances';
-import { listTrackers } from '@/db/trackers';
-import { type Substance, type Tracker, type TrackerShape } from '@/db/types';
+import { type Substance } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 
-const SHAPE_NAMES: Record<TrackerShape, string> = {
-  bool: 'yes / no',
-  scale: 'scale',
-  multi_pick: 'multi-choice',
-  measure: 'number + rating',
-};
-
 export default function SettingsScreen() {
   const bottomPadding = useTabContentPadding();
-  const { data, reload } = useDbData(async (db) => {
-    const [trackers, substances] = await Promise.all([listTrackers(db, true), listSubstances(db, true)]);
-    return { trackers, substances };
-  });
+  const { data: substances, reload } = useDbData((db) => listSubstances(db, true));
 
-  const [trackerSheet, setTrackerSheet] = useState<{ open: boolean; tracker: Tracker | null }>({
-    open: false,
-    tracker: null,
-  });
-  const [substanceSheet, setSubstanceSheet] = useState<{ open: boolean; substance: Substance | null }>({
+  const [sheet, setSheet] = useState<{ open: boolean; substance: Substance | null }>({
     open: false,
     substance: null,
   });
@@ -42,28 +26,10 @@ export default function SettingsScreen() {
       <SafeAreaView edges={['top']} style={styles.safeArea}>
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
-            TRACKERS
-          </ThemedText>
-          {(data?.trackers ?? []).map((tracker) => (
-            <Pressable key={tracker.id} onPress={() => setTrackerSheet({ open: true, tracker })}>
-              <ThemedView type="backgroundElement" style={[styles.row, tracker.archived && styles.archived]}>
-                <ThemedText style={styles.rowName}>
-                  {tracker.name}
-                  {tracker.archived ? '  (archived)' : ''}
-                </ThemedText>
-                <ThemedText type="small" themeColor="textSecondary">
-                  {SHAPE_NAMES[tracker.shape]}
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          ))}
-          <Button label="+ Add tracker" onPress={() => setTrackerSheet({ open: true, tracker: null })} />
-
-          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
             SUBSTANCES
           </ThemedText>
-          {(data?.substances ?? []).map((substance) => (
-            <Pressable key={substance.id} onPress={() => setSubstanceSheet({ open: true, substance })}>
+          {(substances ?? []).map((substance) => (
+            <Pressable key={substance.id} onPress={() => setSheet({ open: true, substance })}>
               <ThemedView type="backgroundElement" style={[styles.row, substance.archived && styles.archived]}>
                 <ThemedText style={styles.rowName}>
                   {substance.name}
@@ -76,25 +42,19 @@ export default function SettingsScreen() {
               </ThemedView>
             </Pressable>
           ))}
-          {(data?.substances ?? []).length === 0 ? (
+          {(substances ?? []).length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
               Substances you add here become available to log on the Today tab.
             </ThemedText>
           ) : null}
-          <Button label="+ Add substance" onPress={() => setSubstanceSheet({ open: true, substance: null })} />
+          <Button label="+ Add substance" onPress={() => setSheet({ open: true, substance: null })} />
         </ScrollView>
       </SafeAreaView>
 
-      <TrackerEditorSheet
-        visible={trackerSheet.open}
-        tracker={trackerSheet.tracker}
-        onClose={() => setTrackerSheet({ open: false, tracker: null })}
-        onSaved={reload}
-      />
       <SubstanceEditorSheet
-        visible={substanceSheet.open}
-        substance={substanceSheet.substance}
-        onClose={() => setSubstanceSheet({ open: false, substance: null })}
+        visible={sheet.open}
+        substance={sheet.substance}
+        onClose={() => setSheet({ open: false, substance: null })}
         onSaved={reload}
       />
     </ThemedView>
