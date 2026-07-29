@@ -67,7 +67,7 @@ export default function TodayScreen() {
       </SafeAreaView>
 
       <LogUsageSheet
-        visible={usageOpen}
+        visible={usageOpen && (data?.substances.length ?? 0) > 0}
         substances={data?.substances ?? []}
         forDate={today}
         currentTotals={dayTotals}

@@ -1,3 +1,4 @@
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -12,19 +13,12 @@ import { addUsage, setDailyTotal } from '@/db/substances';
 import { type Substance } from '@/db/types';
 import { parseDateKey, todayKey } from '@/lib/dates';
 
-function defaultTimeText(forDate: string): string {
-  if (forDate !== todayKey()) return '12:00';
-  const now = new Date();
-  return `${now.getHours()}:${String(now.getMinutes()).padStart(2, '0')}`;
-}
-
-function parseTime(text: string): { hours: number; minutes: number } | null {
-  const match = /^(\d{1,2}):(\d{2})$/.exec(text.trim());
-  if (!match) return null;
-  const hours = Number(match[1]);
-  const minutes = Number(match[2]);
-  if (hours > 23 || minutes > 59) return null;
-  return { hours, minutes };
+/** Initial picker time: "now" when logging today, midday when backfilling. */
+function defaultTime(forDate: string): Date {
+  if (forDate === todayKey()) return new Date();
+  const d = parseDateKey(forDate);
+  d.setHours(12, 0, 0, 0);
+  return d;
 }
 
 /** Log a substance usage event (or set the day's total for daily-total-only substances). */
@@ -62,7 +56,7 @@ function LogUsageSheetContent({
   const [substance, setSubstance] = useState<Substance | null>(null);
   const [amountText, setAmountText] = useState('');
   const [route, setRoute] = useState<string | null>(null);
-  const [timeText, setTimeText] = useState(defaultTimeText(forDate));
+  const [time, setTime] = useState(() => defaultTime(forDate));
 
   const pickSubstance = (s: Substance) => {
     setSubstance(s);
@@ -72,14 +66,9 @@ function LogUsageSheetContent({
 
   const amount = parseFloat(amountText.replace(',', '.'));
   const needsRoute = (substance?.routes.length ?? 0) > 1 && !substance?.dailyTotalOnly;
-  const time = parseTime(timeText);
   const needsTime = substance !== null && !substance.dailyTotalOnly;
   const valid =
-    substance !== null &&
-    !isNaN(amount) &&
-    amount >= 0 &&
-    (!needsRoute || route !== null) &&
-    (!needsTime || time !== null);
+    substance !== null && !isNaN(amount) && amount >= 0 && (!needsRoute || route !== null);
 
   const save = async () => {
     if (!substance || !valid) return;
@@ -87,7 +76,7 @@ function LogUsageSheetContent({
       await setDailyTotal(db, substance.id, forDate, amount);
     } else {
       const d = parseDateKey(forDate);
-      d.setHours(time!.hours, time!.minutes, 0, 0);
+      d.setHours(time.getHours(), time.getMinutes(), 0, 0);
       await addUsage(db, {
         substanceId: substance.id,
         forDate,
@@ -139,13 +128,21 @@ function LogUsageSheetContent({
             </>
           ) : null}
           {needsTime ? (
-            <TextField
-              label="Time (24h)"
-              value={timeText}
-              onChangeText={setTimeText}
-              placeholder="14:30"
-              keyboardType="numbers-and-punctuation"
-            />
+            <>
+              <ThemedText type="small" themeColor="textSecondary">
+                Time
+              </ThemedText>
+              <DateTimePicker
+                value={time}
+                mode="time"
+                display="spinner"
+                themeVariant="dark"
+                style={styles.timePicker}
+                onChange={(_, selected) => {
+                  if (selected) setTime(selected);
+                }}
+              />
+            </>
           ) : null}
           <Button label="Save" onPress={save} disabled={!valid} />
           <Button label="Back" variant="secondary" onPress={() => setSubstance(null)} />
@@ -156,6 +153,9 @@ function LogUsageSheetContent({
 }
 
 const styles = StyleSheet.create({
+  timePicker: {
+    alignSelf: 'center',
+  },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
