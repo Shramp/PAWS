@@ -25,6 +25,18 @@ CREATE INDEX IF NOT EXISTS idx_usage_events_date ON usage_events(for_date);
 CREATE INDEX IF NOT EXISTS idx_usage_events_substance_date ON usage_events(substance_id, for_date);
 `;
 
+/**
+ * Days the user explicitly affirmed as "no use at all". A day counts as
+ * *tracked* if it has any usage event OR appears here; on tracked days the
+ * absence of a substance means zero use (from that substance's first entry
+ * onward), while untracked days are unknown.
+ */
+const SCHEMA_V2 = `
+CREATE TABLE IF NOT EXISTS confirmed_days (
+  for_date TEXT PRIMARY KEY
+);
+`;
+
 export async function initDb(db: SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
   await db.execAsync('PRAGMA foreign_keys = ON');
@@ -36,6 +48,12 @@ export async function initDb(db: SQLiteDatabase) {
     await db.withTransactionAsync(async () => {
       await db.execAsync(SCHEMA_V1);
       await db.execAsync('PRAGMA user_version = 1');
+    });
+  }
+  if (version < 2) {
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(SCHEMA_V2);
+      await db.execAsync('PRAGMA user_version = 2');
     });
   }
 }

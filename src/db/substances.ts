@@ -167,3 +167,87 @@ export async function dailyTotals(db: SQLiteDatabase, forDate: string): Promise<
 export async function weeklyTotals(db: SQLiteDatabase, weekStartKey: string): Promise<SubstanceTotal[]> {
   return totalsInRange(db, weekStartKey, addDays(weekStartKey, 6));
 }
+
+/** Distinct dates with any usage in [startDate, endDate] — calendar markers. */
+export async function datesWithUsage(db: SQLiteDatabase, startDate: string, endDate: string): Promise<string[]> {
+  const rows = await db.getAllAsync<{ for_date: string }>(
+    'SELECT DISTINCT for_date FROM usage_events WHERE for_date >= ? AND for_date <= ?',
+    startDate,
+    endDate,
+  );
+  return rows.map((r) => r.for_date);
+}
+
+/** Toggle a day's explicit "no use at all" confirmation. */
+export async function setDayConfirmed(db: SQLiteDatabase, forDate: string, confirmed: boolean) {
+  if (confirmed) {
+    await db.runAsync('INSERT OR IGNORE INTO confirmed_days (for_date) VALUES (?)', forDate);
+  } else {
+    await db.runAsync('DELETE FROM confirmed_days WHERE for_date = ?', forDate);
+  }
+}
+
+/** Explicitly confirmed no-use dates in [startDate, endDate]. */
+export async function confirmedDaysInRange(
+  db: SQLiteDatabase,
+  startDate: string,
+  endDate: string,
+): Promise<string[]> {
+  const rows = await db.getAllAsync<{ for_date: string }>(
+    'SELECT for_date FROM confirmed_days WHERE for_date >= ? AND for_date <= ?',
+    startDate,
+    endDate,
+  );
+  return rows.map((r) => r.for_date);
+}
+
+export async function isDayConfirmed(db: SQLiteDatabase, forDate: string): Promise<boolean> {
+  const row = await db.getFirstAsync<{ for_date: string }>(
+    'SELECT for_date FROM confirmed_days WHERE for_date = ?',
+    forDate,
+  );
+  return row !== null;
+}
+
+/**
+ * Tracked dates in [startDate, endDate]: any usage event or an explicit
+ * confirmation. On a tracked day, a substance with no events = zero use.
+ */
+export async function trackedDatesInRange(
+  db: SQLiteDatabase,
+  startDate: string,
+  endDate: string,
+): Promise<Set<string>> {
+  const [used, confirmed] = await Promise.all([
+    datesWithUsage(db, startDate, endDate),
+    confirmedDaysInRange(db, startDate, endDate),
+  ]);
+  return new Set([...used, ...confirmed]);
+}
+
+/** First-ever entry date for a substance — zeros only count from here on. */
+export async function firstEntryDate(db: SQLiteDatabase, substanceId: number): Promise<string | null> {
+  const row = await db.getFirstAsync<{ first: string | null }>(
+    'SELECT MIN(for_date) AS first FROM usage_events WHERE substance_id = ?',
+    substanceId,
+  );
+  return row?.first ?? null;
+}
+
+/** Per-day totals for one substance in [startDate, endDate] — trends chart. */
+export async function dailyTotalsForSubstance(
+  db: SQLiteDatabase,
+  substanceId: number,
+  startDate: string,
+  endDate: string,
+): Promise<{ forDate: string; total: number }[]> {
+  const rows = await db.getAllAsync<{ for_date: string; total: number }>(
+    `SELECT for_date, SUM(amount) AS total FROM usage_events
+     WHERE substance_id = ? AND for_date >= ? AND for_date <= ?
+     GROUP BY for_date`,
+    substanceId,
+    startDate,
+    endDate,
+  );
+  return rows.map((r) => ({ forDate: r.for_date, total: r.total }));
+}

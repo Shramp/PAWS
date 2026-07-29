@@ -1,7 +1,7 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, ThemeProvider } from 'expo-router';
 import { SQLiteProvider } from 'expo-sqlite';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
 
 import AppTabs from '@/components/app-tabs';
 import { DATABASE_NAME, initDb } from '@/db/schema';
@@ -9,10 +9,10 @@ import { DATABASE_NAME, initDb } from '@/db/schema';
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-
+  // Always-dark app: fixed theme regardless of the system scheme.
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+    <ThemeProvider value={DarkTheme}>
+      <StatusBar style="light" />
       <SQLiteProvider databaseName={DATABASE_NAME} onInit={initDb}>
         <AppTabs />
       </SQLiteProvider>

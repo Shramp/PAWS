@@ -6,14 +6,14 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "paws",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.shramp.paws"
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#D96745",
+        "backgroundColor": "#171320",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -30,7 +30,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#D96745",
+          "backgroundColor": "#171320",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 120
         }

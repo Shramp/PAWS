@@ -1,8 +1,8 @@
 import { Resvg } from '@resvg/resvg-js';
 import { writeFileSync, mkdirSync } from 'node:fs';
 
-const CORAL = '#D96745';
-const CREAM = '#FFF7F2';
+const PLUM = '#171320';
+const PINK = '#F0A3C6';
 
 /** Cat paw print: one main pad + four toes. `fill` = paw color, `bg` = background rect or ''. */
 function pawSvg({ size, fill, bg, scale = 1 }) {
@@ -33,14 +33,14 @@ function render(svg, size, outPath) {
 
 mkdirSync('out', { recursive: true });
 
-// iOS app icon: coral background, cream paw
-render(pawSvg({ size: 1024, fill: CREAM, bg: CORAL, scale: 0.9 }), 1024, 'out/icon.png');
-// Splash: cream paw on transparent (splash background color set in app.json)
-render(pawSvg({ size: 512, fill: CREAM, bg: '', scale: 1 }), 512, 'out/splash-icon.png');
+// iOS app icon: plum background, pink paw
+render(pawSvg({ size: 1024, fill: PINK, bg: PLUM, scale: 0.9 }), 1024, 'out/icon.png');
+// Splash: pink paw on transparent (splash background color set in app.json)
+render(pawSvg({ size: 512, fill: PINK, bg: '', scale: 1 }), 512, 'out/splash-icon.png');
 // Android adaptive foreground/monochrome: paw shrunk into the 66% safe zone
-render(pawSvg({ size: 1024, fill: CREAM, bg: '', scale: 0.55 }), 1024, 'out/android-icon-foreground.png');
+render(pawSvg({ size: 1024, fill: PINK, bg: '', scale: 0.55 }), 1024, 'out/android-icon-foreground.png');
 render(pawSvg({ size: 1024, fill: '#FFFFFF', bg: '', scale: 0.55 }), 1024, 'out/android-icon-monochrome.png');
-// Android adaptive background: solid coral
-render(pawSvg({ size: 1024, fill: CORAL, bg: CORAL, scale: 0 }), 1024, 'out/android-icon-background.png');
+// Android adaptive background: solid plum
+render(pawSvg({ size: 1024, fill: PLUM, bg: PLUM, scale: 0 }), 1024, 'out/android-icon-background.png');
 // Web favicon
-render(pawSvg({ size: 48, fill: CREAM, bg: CORAL, scale: 1 }), 48, 'out/favicon.png');
+render(pawSvg({ size: 48, fill: PINK, bg: PLUM, scale: 1 }), 48, 'out/favicon.png');

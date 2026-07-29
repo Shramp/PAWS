@@ -7,26 +7,33 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+/**
+ * PAWS palette: always-dark plum base with pastel accents.
+ * accent (pink) marks usage; accentSecondary (teal) marks confirmed zeros.
+ * `light` is kept type-compatible but the app renders dark everywhere.
+ */
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
-    accent: '#D96745',
-    onAccent: '#ffffff',
-    danger: '#C43D3D',
+    text: '#231D31',
+    background: '#FBF8FC',
+    backgroundElement: '#F2EDF6',
+    backgroundSelected: '#E5DCEE',
+    textSecondary: '#6C6187',
+    accent: '#D2699F',
+    onAccent: '#FFFFFF',
+    accentSecondary: '#1FA48E',
+    danger: '#C74A6B',
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
-    accent: '#E8845F',
-    onAccent: '#1A0E08',
-    danger: '#E06C6C',
+    text: '#F3EFFA',
+    background: '#171320',
+    backgroundElement: '#231D31',
+    backgroundSelected: '#332A47',
+    textSecondary: '#A79DC2',
+    accent: '#F0A3C6',
+    onAccent: '#331526',
+    accentSecondary: '#7ED9C8',
+    danger: '#E56D8A',
   },
 } as const;
 
