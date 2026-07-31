@@ -8,41 +8,41 @@ import { Chip } from '@/components/ui/chip';
 import { Sheet } from '@/components/ui/sheet';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
-import { createSubstance, setSubstanceArchived, updateSubstance } from '@/db/substances';
-import { ADMINISTRATION_ROUTES, type Substance } from '@/db/types';
+import { createItem, setItemArchived, updateItem } from '@/db/items';
+import { ADMINISTRATION_ROUTES, type Item } from '@/db/types';
 import { useTheme } from '@/hooks/use-theme';
 
-/** Create or edit a substance: name, unit, routes, daily-total-only. */
-export function SubstanceEditorSheet({
+/** Create or edit a item: name, unit, routes, daily-total-only. */
+export function ItemEditorSheet({
   visible,
   ...props
 }: {
   visible: boolean;
-  /** null → creating a new substance */
-  substance: Substance | null;
+  /** null → creating a new item */
+  item: Item | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  // Mount fresh on each open so state initializes from the substance being edited.
+  // Mount fresh on each open so state initializes from the item being edited.
   if (!visible) return null;
-  return <SubstanceEditorSheetContent {...props} />;
+  return <ItemEditorSheetContent {...props} />;
 }
 
-function SubstanceEditorSheetContent({
-  substance,
+function ItemEditorSheetContent({
+  item,
   onClose,
   onSaved,
 }: {
-  substance: Substance | null;
+  item: Item | null;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const db = useSQLiteContext();
   const theme = useTheme();
-  const [name, setName] = useState(substance?.name ?? '');
-  const [unit, setUnit] = useState(substance?.unit ?? '');
-  const [routes, setRoutes] = useState<string[]>(substance?.routes ?? []);
-  const [dailyTotalOnly, setDailyTotalOnly] = useState(substance?.dailyTotalOnly ?? false);
+  const [name, setName] = useState(item?.name ?? '');
+  const [unit, setUnit] = useState(item?.unit ?? '');
+  const [routes, setRoutes] = useState<string[]>(item?.routes ?? []);
+  const [dailyTotalOnly, setDailyTotalOnly] = useState(item?.dailyTotalOnly ?? false);
 
   const toggleRoute = (route: string) => {
     setRoutes((prev) => (prev.includes(route) ? prev.filter((r) => r !== route) : [...prev, route]));
@@ -53,24 +53,24 @@ function SubstanceEditorSheetContent({
   const save = async () => {
     if (!valid) return;
     const payload = { name: name.trim(), unit: unit.trim(), routes, dailyTotalOnly };
-    if (substance) {
-      await updateSubstance(db, substance.id, payload);
+    if (item) {
+      await updateItem(db, item.id, payload);
     } else {
-      await createSubstance(db, payload);
+      await createItem(db, payload);
     }
     onSaved();
     onClose();
   };
 
   const toggleArchive = async () => {
-    if (!substance) return;
-    await setSubstanceArchived(db, substance.id, !substance.archived);
+    if (!item) return;
+    await setItemArchived(db, item.id, !item.archived);
     onSaved();
     onClose();
   };
 
   return (
-    <Sheet visible onClose={onClose} title={substance ? 'Edit substance' : 'New substance'}>
+    <Sheet visible onClose={onClose} title={item ? 'Edit item' : 'New item'}>
       <TextField label="Name" value={name} onChangeText={setName} placeholder="e.g. Caffeine" />
       <TextField label="Unit" value={unit} onChangeText={setUnit} placeholder="mg" autoCapitalize="none" />
 
@@ -93,9 +93,9 @@ function SubstanceEditorSheetContent({
         <Switch value={dailyTotalOnly} onValueChange={setDailyTotalOnly} trackColor={{ true: theme.accent }} />
       </View>
 
-      <Button label={substance ? 'Save changes' : 'Create substance'} onPress={save} disabled={!valid} />
-      {substance ? (
-        <Button label={substance.archived ? 'Unarchive' : 'Archive'} variant="secondary" onPress={toggleArchive} />
+      <Button label={item ? 'Save changes' : 'Create item'} onPress={save} disabled={!valid} />
+      {item ? (
+        <Button label={item.archived ? 'Unarchive' : 'Archive'} variant="secondary" onPress={toggleArchive} />
       ) : null}
     </Sheet>
   );

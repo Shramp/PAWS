@@ -3,20 +3,24 @@ import { type SQLiteDatabase } from 'expo-sqlite';
 /**
  * Backup format: raw table rows plus header. Kept lossless (ids included) so
  * a restore onto a fresh install reproduces the database exactly.
+ *
+ * Backups written before the July 2026 "substance" → "item" rename use
+ * `substances` / `usage_events` keys; convert them with
+ * `scripts/convert-backup.mjs`.
  */
 export interface BackupFile {
   app: 'paws';
   schemaVersion: number;
   exportedAt: string;
-  substances: Record<string, unknown>[];
-  usage_events: Record<string, unknown>[];
+  items: Record<string, unknown>[];
+  intake_events: Record<string, unknown>[];
   confirmed_days: Record<string, unknown>[];
 }
 
 export async function exportBackup(db: SQLiteDatabase): Promise<string> {
-  const [substances, usageEvents, confirmedDays, versionRow] = await Promise.all([
-    db.getAllAsync<Record<string, unknown>>('SELECT * FROM substances'),
-    db.getAllAsync<Record<string, unknown>>('SELECT * FROM usage_events'),
+  const [items, intakeEvents, confirmedDays, versionRow] = await Promise.all([
+    db.getAllAsync<Record<string, unknown>>('SELECT * FROM items'),
+    db.getAllAsync<Record<string, unknown>>('SELECT * FROM intake_events'),
     db.getAllAsync<Record<string, unknown>>('SELECT * FROM confirmed_days'),
     db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'),
   ]);
@@ -25,8 +29,8 @@ export async function exportBackup(db: SQLiteDatabase): Promise<string> {
     app: 'paws',
     schemaVersion: versionRow?.user_version ?? 0,
     exportedAt: new Date().toISOString(),
-    substances,
-    usage_events: usageEvents,
+    items,
+    intake_events: intakeEvents,
     confirmed_days: confirmedDays,
   };
   return JSON.stringify(backup, null, 2);
@@ -40,16 +44,21 @@ export function parseBackup(json: string): BackupFile {
   } catch {
     throw new Error('That file is not valid JSON.');
   }
-  const backup = data as Partial<BackupFile>;
+  const backup = data as Partial<BackupFile> & { substances?: unknown };
   if (backup.app !== 'paws') {
     throw new Error('That file does not look like a PAWS backup.');
   }
-  if (typeof backup.schemaVersion !== 'number' || backup.schemaVersion > 2) {
+  if (backup.substances !== undefined && backup.items === undefined) {
+    throw new Error(
+      'That backup uses the old “substances” format. Convert it with scripts/convert-backup.mjs first.',
+    );
+  }
+  if (typeof backup.schemaVersion !== 'number' || backup.schemaVersion > 1) {
     throw new Error(
       'This backup was made by a newer version of PAWS — update the app before importing it.',
     );
   }
-  for (const table of ['substances', 'usage_events'] as const) {
+  for (const table of ['items', 'intake_events'] as const) {
     if (!Array.isArray(backup[table])) {
       throw new Error(`Backup is missing the ${table} table.`);
     }
@@ -70,17 +79,17 @@ function insertSql(table: string, row: Record<string, unknown>): [string, unknow
 export async function importBackup(
   db: SQLiteDatabase,
   backup: BackupFile,
-): Promise<{ substances: number; events: number; days: number }> {
+): Promise<{ items: number; events: number; days: number }> {
   await db.withTransactionAsync(async () => {
-    await db.execAsync('DELETE FROM usage_events');
+    await db.execAsync('DELETE FROM intake_events');
     await db.execAsync('DELETE FROM confirmed_days');
-    await db.execAsync('DELETE FROM substances');
-    for (const row of backup.substances) {
-      const [sql, params] = insertSql('substances', row);
+    await db.execAsync('DELETE FROM items');
+    for (const row of backup.items) {
+      const [sql, params] = insertSql('items', row);
       await db.runAsync(sql, ...(params as never[]));
     }
-    for (const row of backup.usage_events) {
-      const [sql, params] = insertSql('usage_events', row);
+    for (const row of backup.intake_events) {
+      const [sql, params] = insertSql('intake_events', row);
       await db.runAsync(sql, ...(params as never[]));
     }
     for (const row of backup.confirmed_days) {
@@ -89,8 +98,8 @@ export async function importBackup(
     }
   });
   return {
-    substances: backup.substances.length,
-    events: backup.usage_events.length,
+    items: backup.items.length,
+    events: backup.intake_events.length,
     days: backup.confirmed_days.length,
   };
 }

@@ -8,38 +8,38 @@ function csvField(value: string | number): string {
 }
 
 /**
- * Spreadsheet-friendly summary: one row per tracked period per substance.
+ * Spreadsheet-friendly summary: one row per tracked period per item.
  *   granularity: daily | weekly (weekly periods are Monday-start)
  *   period:      the day, or the week's start day
  *   total:       0 = affirmed zero (tracked); untracked periods are omitted
- * Periods start at each substance's first-ever entry.
+ * Periods start at each item's first-ever entry.
  */
 export async function exportCsvSummary(db: SQLiteDatabase): Promise<string> {
   const today = todayKey();
 
-  const substances = await db.getAllAsync<{ id: number; name: string; unit: string }>(
-    'SELECT id, name, unit FROM substances ORDER BY sort_order, id',
+  const items = await db.getAllAsync<{ id: number; name: string; unit: string }>(
+    'SELECT id, name, unit FROM items ORDER BY sort_order, id',
   );
-  const totals = await db.getAllAsync<{ substance_id: number; for_date: string; total: number }>(
-    'SELECT substance_id, for_date, SUM(amount) AS total FROM usage_events GROUP BY substance_id, for_date',
+  const totals = await db.getAllAsync<{ item_id: number; for_date: string; total: number }>(
+    'SELECT item_id, for_date, SUM(amount) AS total FROM intake_events GROUP BY item_id, for_date',
   );
   const trackedRows = await db.getAllAsync<{ for_date: string }>(
-    'SELECT DISTINCT for_date FROM usage_events UNION SELECT for_date FROM confirmed_days',
+    'SELECT DISTINCT for_date FROM intake_events UNION SELECT for_date FROM confirmed_days',
   );
 
   const tracked = new Set(trackedRows.map((r) => r.for_date));
-  const bySubstance = new Map<number, Map<string, number>>();
+  const byItem = new Map<number, Map<string, number>>();
   for (const t of totals) {
-    const m = bySubstance.get(t.substance_id) ?? new Map<string, number>();
+    const m = byItem.get(t.item_id) ?? new Map<string, number>();
     m.set(t.for_date, t.total);
-    bySubstance.set(t.substance_id, m);
+    byItem.set(t.item_id, m);
   }
 
-  const lines = ['granularity,period,substance,unit,total'];
+  const lines = ['granularity,period,item,unit,total'];
 
   for (const granularity of ['daily', 'weekly'] as const) {
-    for (const s of substances) {
-      const days = bySubstance.get(s.id);
+    for (const item of items) {
+      const days = byItem.get(item.id);
       if (!days || days.size === 0) continue;
       const firstEntry = [...days.keys()].sort()[0];
 
@@ -47,11 +47,15 @@ export async function exportCsvSummary(db: SQLiteDatabase): Promise<string> {
         for (let key = firstEntry; key <= today; key = addDays(key, 1)) {
           if (!tracked.has(key)) continue;
           lines.push(
-            [granularity, key, csvField(s.name), csvField(s.unit), days.get(key) ?? 0].join(','),
+            [granularity, key, csvField(item.name), csvField(item.unit), days.get(key) ?? 0].join(','),
           );
         }
       } else {
-        for (let weekStart = startOfWeekKey(firstEntry); weekStart <= today; weekStart = addDays(weekStart, 7)) {
+        for (
+          let weekStart = startOfWeekKey(firstEntry);
+          weekStart <= today;
+          weekStart = addDays(weekStart, 7)
+        ) {
           let total = 0;
           let weekTracked = false;
           for (let d = 0; d < 7; d++) {
@@ -61,7 +65,9 @@ export async function exportCsvSummary(db: SQLiteDatabase): Promise<string> {
             if (tracked.has(key)) weekTracked = true;
           }
           if (!weekTracked) continue;
-          lines.push([granularity, weekStart, csvField(s.name), csvField(s.unit), total].join(','));
+          lines.push(
+            [granularity, weekStart, csvField(item.name), csvField(item.unit), total].join(','),
+          );
         }
       }
     }

@@ -7,7 +7,7 @@ import { GlassCard } from '@/components/ui/glass-card';
 import { Screen } from '@/components/ui/screen';
 import { Chip } from '@/components/ui/chip';
 import { Spacing } from '@/constants/theme';
-import { dailyTotalsForSubstance, firstEntryDate, listSubstances, trackedDatesInRange } from '@/db/substances';
+import { dailyTotalsForItem, firstEntryDate, listItems, trackedDatesInRange } from '@/db/items';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { addDays, friendlyDate, shortDate, startOfWeekKey, todayKey, weekRangeLabel } from '@/lib/dates';
@@ -24,7 +24,7 @@ export default function TrendsScreen() {
   const [mode, setMode] = useState<Mode>('days');
   const [dayRange, setDayRange] = useState(DAY_RANGES[0]);
   const [weekRange, setWeekRange] = useState(WEEK_RANGES[0]);
-  const [substanceId, setSubstanceId] = useState<number | null>(null);
+  const [itemId, setItemId] = useState<number | null>(null);
   const [selectedBar, setSelectedBar] = useState<string | null>(null);
 
   const today = todayKey();
@@ -34,27 +34,27 @@ export default function TrendsScreen() {
 
   const { data } = useDbData(
     async (db) => {
-      const substances = await listSubstances(db);
-      const selected = substances.find((s) => s.id === substanceId) ?? substances[0] ?? null;
+      const items = await listItems(db);
+      const selected = items.find((s) => s.id === itemId) ?? items[0] ?? null;
       const [totals, tracked, firstEntry] = selected
         ? await Promise.all([
-            dailyTotalsForSubstance(db, selected.id, rangeStart, today),
+            dailyTotalsForItem(db, selected.id, rangeStart, today),
             trackedDatesInRange(db, rangeStart, today),
             firstEntryDate(db, selected.id),
           ])
         : [[], new Set<string>(), null];
-      return { substances, selected, totals, tracked, firstEntry };
+      return { items, selected, totals, tracked, firstEntry };
     },
-    [substanceId, mode, rangeStart, today],
+    [itemId, mode, rangeStart, today],
   );
 
   const bars = useMemo<BarDatum[]>(() => {
     const byDate = new Map((data?.totals ?? []).map((t) => [t.forDate, t.total]));
     const tracked = data?.tracked ?? new Set<string>();
     const firstEntry = data?.firstEntry ?? null;
-    // Zeros only count as data from the substance's first-ever entry onward.
+    // Zeros only count as data from the item's first-ever entry onward.
     const zeroStart = firstEntry === null ? null : firstEntry > rangeStart ? firstEntry : rangeStart;
-    const isTrackedForSubstance = (key: string) =>
+    const isTrackedForItem = (key: string) =>
       zeroStart !== null && key >= zeroStart && key <= today && tracked.has(key);
 
     if (mode === 'days') {
@@ -68,7 +68,7 @@ export default function TrendsScreen() {
           label: String(dayNum),
           monthMark: i === 0 || dayNum === 1 ? MONTH_ABBR(key) : undefined,
           total,
-          trackedZero: total === 0 && isTrackedForSubstance(key),
+          trackedZero: total === 0 && isTrackedForItem(key),
         });
       }
       return out;
@@ -82,7 +82,7 @@ export default function TrendsScreen() {
       for (let d = 0; d < 7; d++) {
         const key = addDays(weekStart, d);
         total += byDate.get(key) ?? 0;
-        if (isTrackedForSubstance(key)) weekTracked = true;
+        if (isTrackedForItem(key)) weekTracked = true;
       }
       const monthOfWeek = MONTH_ABBR(weekStart);
       out.push({
@@ -97,7 +97,7 @@ export default function TrendsScreen() {
     return out;
   }, [data, mode, count, rangeStart, today]);
 
-  const substance = data?.selected ?? null;
+  const item = data?.selected ?? null;
   const grandTotal = bars.reduce((sum, b) => sum + b.total, 0);
   // Tracked periods = used or affirmed-zero; unknown periods stay out of the averages.
   const trackedPeriods = bars.filter((b) => b.total > 0 || b.trackedZero).length;
@@ -118,13 +118,13 @@ export default function TrendsScreen() {
           showsHorizontalScrollIndicator={false}
           style={styles.chipBar}
           contentContainerStyle={styles.chipBarContent}>
-          {(data?.substances ?? []).map((s) => (
+          {(data?.items ?? []).map((s) => (
             <Chip
               key={s.id}
               label={s.name}
-              selected={substance?.id === s.id}
+              selected={item?.id === s.id}
               onPress={() => {
-                setSubstanceId(s.id);
+                setItemId(s.id);
                 clearSelection();
               }}
             />
@@ -161,21 +161,21 @@ export default function TrendsScreen() {
           ))}
         </View>
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
-          {!substance ? (
+          {!item ? (
             <ThemedText themeColor="textSecondary">
-              No substances yet — add them in Settings to see trends.
+              No items yet — add them in Settings to see trends.
             </ThemedText>
           ) : grandTotal === 0 ? (
             <ThemedText themeColor="textSecondary">
-              No usage logged for {substance.name} in the last {count} {mode === 'days' ? 'days' : 'weeks'}.
+              No usage logged for {item.name} in the last {count} {mode === 'days' ? 'days' : 'weeks'}.
             </ThemedText>
           ) : (
             <>
               <GlassCard style={styles.chartCard}>
                 <ThemedText type="smallBold">
                   {selectedDatum
-                    ? `${periodLabel(selectedDatum.key)} · ${round(selectedDatum.total)}${substance.unit}`
-                    : `${substance.name}, last ${count} ${mode === 'days' ? 'days' : 'weeks'}`}
+                    ? `${periodLabel(selectedDatum.key)} · ${round(selectedDatum.total)}${item.unit}`
+                    : `${item.name}, last ${count} ${mode === 'days' ? 'days' : 'weeks'}`}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {selectedDatum
@@ -183,7 +183,7 @@ export default function TrendsScreen() {
                       ? 'Confirmed zero — tap again to deselect'
                       : 'Tap again to deselect'
                     : peak
-                      ? `Peak ${round(peak.total)}${substance.unit} · ${periodLabel(peak.key)}`
+                      ? `Peak ${round(peak.total)}${item.unit} · ${periodLabel(peak.key)}`
                       : ''}
                 </ThemedText>
                 <BarChart
@@ -200,7 +200,7 @@ export default function TrendsScreen() {
                   </ThemedText>
                   <ThemedText type="smallBold">
                     {round(grandTotal)}
-                    {substance.unit}
+                    {item.unit}
                   </ThemedText>
                 </View>
                 <View style={styles.stat}>
@@ -209,7 +209,7 @@ export default function TrendsScreen() {
                   </ThemedText>
                   <ThemedText type="smallBold">
                     {round(average)}
-                    {substance.unit}
+                    {item.unit}
                   </ThemedText>
                 </View>
                 <View style={styles.stat}>

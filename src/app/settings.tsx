@@ -4,7 +4,7 @@ import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
 
-import { SubstanceEditorSheet } from '@/components/substance-editor-sheet';
+import { ItemEditorSheet } from '@/components/item-editor-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Screen } from '@/components/ui/screen';
@@ -12,19 +12,19 @@ import { Button } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
 import { exportBackup, importBackup, parseBackup } from '@/db/backup';
 import { exportCsvSummary } from '@/db/csv';
-import { listSubstances } from '@/db/substances';
-import { type Substance } from '@/db/types';
+import { listItems } from '@/db/items';
+import { type Item } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { todayKey } from '@/lib/dates';
 
 export default function SettingsScreen() {
   const bottomPadding = useTabContentPadding();
-  const { data: substances, reload, db } = useDbData((db) => listSubstances(db, true));
+  const { data: items, reload, db } = useDbData((db) => listItems(db, true));
 
-  const [sheet, setSheet] = useState<{ open: boolean; substance: Substance | null }>({
+  const [sheet, setSheet] = useState<{ open: boolean; item: Item | null }>({
     open: false,
-    substance: null,
+    item: null,
   });
 
   const onExport = async () => {
@@ -71,7 +71,7 @@ export default function SettingsScreen() {
       const backup = parseBackup(await new File(result.assets[0].uri).text());
       Alert.alert(
         'Replace all data?',
-        `This backup contains ${backup.substances.length} substances and ${backup.usage_events.length} usage entries (exported ${backup.exportedAt.slice(0, 10)}). Importing REPLACES everything currently in the app.`,
+        `This backup contains ${backup.items.length} items and ${backup.intake_events.length} entries (exported ${backup.exportedAt.slice(0, 10)}). Importing REPLACES everything currently in the app.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
@@ -83,7 +83,7 @@ export default function SettingsScreen() {
                 reload();
                 Alert.alert(
                   'Import complete',
-                  `Restored ${counts.substances} substances, ${counts.events} usage entries, and ${counts.days} no-use days.`,
+                  `Restored ${counts.items} items, ${counts.events} usage entries, and ${counts.days} no-use days.`,
                 );
               } catch (e) {
                 Alert.alert('Import failed', e instanceof Error ? e.message : String(e));
@@ -101,28 +101,28 @@ export default function SettingsScreen() {
     <Screen>
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
-            SUBSTANCES
+            THINGS I TAKE
           </ThemedText>
-          {(substances ?? []).map((substance) => (
-            <Pressable key={substance.id} onPress={() => setSheet({ open: true, substance })}>
-              <GlassCard style={[styles.row, substance.archived && styles.archived]}>
+          {(items ?? []).map((item) => (
+            <Pressable key={item.id} onPress={() => setSheet({ open: true, item })}>
+              <GlassCard style={[styles.row, item.archived && styles.archived]}>
                 <ThemedText style={styles.rowName}>
-                  {substance.name}
-                  {substance.archived ? '  (archived)' : ''}
+                  {item.name}
+                  {item.archived ? '  (archived)' : ''}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
-                  {substance.unit}
-                  {substance.dailyTotalOnly ? ' · daily total' : ''}
+                  {item.unit}
+                  {item.dailyTotalOnly ? ' · daily total' : ''}
                 </ThemedText>
               </GlassCard>
             </Pressable>
           ))}
-          {(substances ?? []).length === 0 ? (
+          {(items ?? []).length === 0 ? (
             <ThemedText type="small" themeColor="textSecondary">
-              Substances you add here become available to log on the Today tab.
+              Items you add here become available to log on the Today tab.
             </ThemedText>
           ) : null}
-          <Button label="+ Add substance" onPress={() => setSheet({ open: true, substance: null })} />
+          <Button label="+ Add item" onPress={() => setSheet({ open: true, item: null })} />
 
           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
             DATA
@@ -133,14 +133,14 @@ export default function SettingsScreen() {
           <ThemedText type="small" themeColor="textSecondary">
             Export saves a JSON backup via the share sheet (Files, AirDrop, …); Import restores one
             onto a fresh install, replacing whatever is here. The CSV summary is a one-way export of
-            daily and weekly totals per substance for spreadsheets.
+            daily and weekly totals per item for spreadsheets.
           </ThemedText>
         </ScrollView>
 
-      <SubstanceEditorSheet
+      <ItemEditorSheet
         visible={sheet.open}
-        substance={sheet.substance}
-        onClose={() => setSheet({ open: false, substance: null })}
+        item={sheet.item}
+        onClose={() => setSheet({ open: false, item: null })}
         onSaved={reload}
       />
     </Screen>

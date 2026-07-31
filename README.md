@@ -1,6 +1,6 @@
 # PAWS 🐾
 
-Personal, offline-only usage tracking app. All data lives in a local SQLite database on the phone — no server, no network, no sync.
+Personal, offline-only intake tracking app. All data lives in a local SQLite database on the phone — no server, no network, no sync, no accounts, no telemetry.
 
 PAWS could stand for:
 
@@ -9,16 +9,19 @@ PAWS could stand for:
 
 ## What it does
 
-- **Log usage events** — timestamp (now or manual), amount, and administration route per substance. Every entry can be backdated.
-- **Substances are config** — each has its own unit (mg, ml, …) and routes (asked when logging only if it has more than one). Substances can be flagged *daily-total-only*: one amount per day, no timestamps.
-- **Views** — chronological day timeline (Today tab) and per-substance daily/weekly totals (Totals tab).
-- **Settings** — add / edit / archive substances in-app.
+- **Log intake** — timestamp (now or manual, via the native wheel picker), amount, and administration route per item. Every entry can be backdated from the Calendar tab.
+- **Items are config** — each has its own unit (mg, ml, …) and routes (asked when logging only if it has more than one). An item can be flagged *daily-total-only*: one amount per day, no timestamps.
+- **Nothing-taken days are data** — mark a day as explicitly zero, so "I took nothing" is distinguishable from "I wasn't tracking." A day counts as *tracked* if it has any entry or that mark; per item, zeros only count from that item's first-ever entry onward.
+- **Views** — Today (timeline for today), Calendar (month grid of paw prints, tap any day to review or backfill), Trends (per-item bar chart over 30/60/90 days or 12/26/52 weeks, with totals and averages over tracked periods only).
+- **Your data stays yours** — JSON backup export/import (for moving to a new install) and a one-way CSV summary of daily/weekly totals for spreadsheets.
 
-Earlier iterations included general daily trackers (sleep, exercise, mood, …), a calendar view, and a todo list — descoped for v1 but recoverable from git history (`640dac9` and earlier).
+Earlier iterations included general daily trackers (sleep, exercise, mood, …) and a todo list — descoped but recoverable from git history (`640dac9` and earlier).
 
 ## Stack
 
 Expo SDK 57 · React Native · TypeScript · expo-router (native tabs) · expo-sqlite
+
+The UI is always-dark: a plum gradient with liquid-glass cards on iOS 26+ (solid cards elsewhere), pastel pink for intake and pastel teal for confirmed zeros.
 
 ## Development
 
@@ -27,7 +30,7 @@ npm install
 npm run ios    # boots the iPhone 13 Pro simulator, starts Metro on port 8090
 ```
 
-Metro runs on port 8090 (8081 is taken locally). `shift+i` in the Metro terminal picks a different simulator.
+Metro runs on port 8090 (8081 is taken on the author's machine). `shift+i` in the Metro terminal picks a different simulator.
 
 Checks:
 
@@ -40,14 +43,22 @@ npx expo lint
 
 ```
 src/
-  app/          # one file per tab (expo-router): index (Today), substances (Totals), settings
-  components/   # log-usage & substance-editor sheets + ui/ primitives (Chip, Sheet, …)
-  db/           # schema + migrations (PRAGMA user_version), typed query module
-  hooks/        # useDbData (focus-aware SQLite loader), useTabContentPadding
+  app/          # one file per tab (expo-router): index (Today), calendar, trends, settings
+  components/   # log-intake & item-editor sheets, bar chart, intake list
+    ui/         # primitives: GlassCard, Screen, Chip, Button, Sheet, MonthGrid, PawDot, …
+  db/           # schema (PRAGMA user_version), typed queries, backup + CSV export
+  hooks/        # useDbData (focus-aware SQLite loader), useTabContentPadding, useTheme
   lib/          # date-key helpers
 scripts/
-  gen-icons.mjs # regenerates the paw icon set (needs @resvg/resvg-js)
+  gen-icons.mjs      # regenerates the paw icon set (needs @resvg/resvg-js)
+  convert-backup.mjs # one-off: converts pre-rename backups to the current format
 ```
+
+### Data model
+
+- `items` — the things you take: name, unit, allowed routes, daily-total-only flag
+- `intake_events` — one row per logged intake; `timestamp_ms` is null for daily-total items
+- `confirmed_days` — days explicitly affirmed as "nothing taken at all"
 
 All dates are local-timezone `YYYY-MM-DD` keys; entries are keyed by the day they apply to, independent of when they were entered.
 
@@ -56,4 +67,6 @@ All dates are local-timezone `YYYY-MM-DD` keys; entries are keyed by the day the
 - **iOS**: `npx expo run:ios --device --configuration Release` with the iPhone plugged in (needs Xcode; free Apple ID = 7-day resign, paid developer account = 1 year).
 - **Android**: `eas build -p android --profile preview` (or a local `npx expo run:android --variant release`) produces an APK to sideload.
 
-Each install has its own private database.
+Expo Go can't run this project on a physical device — the store builds are pinned to SDK 54 while this is SDK 57. The simulator is fine.
+
+Each install has its own private database; nothing syncs between devices.

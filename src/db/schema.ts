@@ -2,8 +2,16 @@ import { type SQLiteDatabase } from 'expo-sqlite';
 
 export const DATABASE_NAME = 'paws.db';
 
+/**
+ * items         — the things you take (name, unit, routes)
+ * intake_events — one logged intake; timestamp_ms is null for daily-total items
+ * confirmed_days — days explicitly affirmed as "nothing taken at all". A day
+ *   counts as *tracked* if it has any intake event OR appears here; on tracked
+ *   days the absence of an item means zero (from that item's first entry on),
+ *   while untracked days are unknown.
+ */
 const SCHEMA_V1 = `
-CREATE TABLE IF NOT EXISTS substances (
+CREATE TABLE IF NOT EXISTS items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   unit TEXT NOT NULL,
@@ -13,25 +21,17 @@ CREATE TABLE IF NOT EXISTS substances (
   sort_order INTEGER NOT NULL DEFAULT 0
 );
 
-CREATE TABLE IF NOT EXISTS usage_events (
+CREATE TABLE IF NOT EXISTS intake_events (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  substance_id INTEGER NOT NULL REFERENCES substances(id) ON DELETE CASCADE,
+  item_id INTEGER NOT NULL REFERENCES items(id) ON DELETE CASCADE,
   for_date TEXT NOT NULL,
   timestamp_ms INTEGER,
   amount REAL NOT NULL,
   route TEXT
 );
-CREATE INDEX IF NOT EXISTS idx_usage_events_date ON usage_events(for_date);
-CREATE INDEX IF NOT EXISTS idx_usage_events_substance_date ON usage_events(substance_id, for_date);
-`;
+CREATE INDEX IF NOT EXISTS idx_intake_events_date ON intake_events(for_date);
+CREATE INDEX IF NOT EXISTS idx_intake_events_item_date ON intake_events(item_id, for_date);
 
-/**
- * Days the user explicitly affirmed as "no use at all". A day counts as
- * *tracked* if it has any usage event OR appears here; on tracked days the
- * absence of a substance means zero use (from that substance's first entry
- * onward), while untracked days are unknown.
- */
-const SCHEMA_V2 = `
 CREATE TABLE IF NOT EXISTS confirmed_days (
   for_date TEXT PRIMARY KEY
 );
@@ -48,12 +48,6 @@ export async function initDb(db: SQLiteDatabase) {
     await db.withTransactionAsync(async () => {
       await db.execAsync(SCHEMA_V1);
       await db.execAsync('PRAGMA user_version = 1');
-    });
-  }
-  if (version < 2) {
-    await db.withTransactionAsync(async () => {
-      await db.execAsync(SCHEMA_V2);
-      await db.execAsync('PRAGMA user_version = 2');
     });
   }
 }

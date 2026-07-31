@@ -4,33 +4,33 @@ import { Alert, Pressable, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Spacing } from '@/constants/theme';
-import { deleteUsage } from '@/db/substances';
-import { type UsageEventWithSubstance } from '@/db/types';
+import { deleteIntake } from '@/db/items';
+import { type IntakeEventWithItem } from '@/db/types';
 import { formatTime } from '@/lib/dates';
 
 /**
  * One day's usage events as a card: timestamped entries chronologically,
  * then daily-total entries. Tap a row to delete it.
  */
-export function UsageList({
+export function IntakeList({
   events,
   emptyLabel,
   onChanged,
 }: {
-  events: UsageEventWithSubstance[];
+  events: IntakeEventWithItem[];
   emptyLabel: string;
   onChanged: () => void;
 }) {
   const db = useSQLiteContext();
 
-  const confirmDelete = (u: UsageEventWithSubstance) => {
-    Alert.alert('Delete entry?', `${u.substanceName} — ${u.amount}${u.unit}`, [
+  const confirmDelete = (u: IntakeEventWithItem) => {
+    Alert.alert('Delete entry?', `${u.itemName} — ${u.amount}${u.unit}`, [
       { text: 'Cancel', style: 'cancel' },
       {
         text: 'Delete',
         style: 'destructive',
         onPress: async () => {
-          await deleteUsage(db, u.id);
+          await deleteIntake(db, u.id);
           onChanged();
         },
       },
@@ -50,7 +50,7 @@ export function UsageList({
               {u.timestampMs !== null ? formatTime(u.timestampMs) : 'total'}
             </ThemedText>
             <ThemedText type="small" style={styles.name}>
-              {u.substanceName}
+              {u.itemName}
             </ThemedText>
             <ThemedText type="smallBold">
               {u.amount}

@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { LogUsageSheet } from '@/components/log-usage-sheet';
+import { LogIntakeSheet } from '@/components/log-intake-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { UsageList } from '@/components/usage-list';
+import { IntakeList } from '@/components/intake-list';
 import { Button } from '@/components/ui/button';
 import { MonthGrid } from '@/components/ui/month-grid';
 import { NavHeader } from '@/components/ui/nav-header';
@@ -12,12 +12,12 @@ import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import {
   confirmedDaysInRange,
-  datesWithUsage,
+  datesWithIntake,
   isDayConfirmed,
-  listSubstances,
+  listItems,
   setDayConfirmed,
-  usageForDate,
-} from '@/db/substances';
+  intakeForDate,
+} from '@/db/items';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { useTheme } from '@/hooks/use-theme';
@@ -30,25 +30,25 @@ export default function CalendarScreen() {
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
   const [selected, setSelected] = useState(todayKey());
-  const [usageOpen, setUsageOpen] = useState(false);
+  const [intakeOpen, setIntakeOpen] = useState(false);
 
   const monthStart = dateKey(new Date(year, month, 1));
   const monthEnd = dateKey(new Date(year, month + 1, 0));
 
   const { data, reload, db } = useDbData(
     async (db) => {
-      const [substances, markedDates, confirmedDates, usage, selectedConfirmed] = await Promise.all([
-        listSubstances(db),
-        datesWithUsage(db, monthStart, monthEnd),
+      const [items, markedDates, confirmedDates, intake, selectedConfirmed] = await Promise.all([
+        listItems(db),
+        datesWithIntake(db, monthStart, monthEnd),
         confirmedDaysInRange(db, monthStart, monthEnd),
-        usageForDate(db, selected),
+        intakeForDate(db, selected),
         isDayConfirmed(db, selected),
       ]);
       return {
-        substances,
+        items,
         marked: new Set(markedDates),
         confirmed: new Set(confirmedDates),
-        usage,
+        intake,
         selectedConfirmed,
       };
     },
@@ -57,8 +57,8 @@ export default function CalendarScreen() {
 
   const dayTotals = useMemo(() => {
     const map = new Map<number, number>();
-    for (const u of data?.usage ?? []) {
-      map.set(u.substanceId, (map.get(u.substanceId) ?? 0) + u.amount);
+    for (const u of data?.intake ?? []) {
+      map.set(u.itemId, (map.get(u.itemId) ?? 0) + u.amount);
     }
     return map;
   }, [data]);
@@ -101,17 +101,17 @@ export default function CalendarScreen() {
         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
           {friendlyDate(selected).toUpperCase()}
         </ThemedText>
-        <UsageList
-          events={data?.usage ?? []}
+        <IntakeList
+          events={data?.intake ?? []}
           emptyLabel={
-            data?.selectedConfirmed ? 'Confirmed no-use day — clean paws. 🐾' : 'Nothing logged this day.'
+            data?.selectedConfirmed ? 'Nothing taken — confirmed — clean paws. 🐾' : 'Nothing logged this day.'
           }
           onChanged={reload}
         />
-        <Button label={`+ Log usage for ${friendlyDate(selected)}`} onPress={() => setUsageOpen(true)} />
-        {data && data.usage.length === 0 && selected <= todayKey() ? (
+        <Button label={`+ Log intake for ${friendlyDate(selected)}`} onPress={() => setIntakeOpen(true)} />
+        {data && data.intake.length === 0 && selected <= todayKey() ? (
           <Button
-            label={data.selectedConfirmed ? 'Undo no-use day' : 'Mark as no-use day'}
+            label={data.selectedConfirmed ? 'Undo nothing-taken' : 'Mark nothing taken'}
             variant="secondary"
             onPress={async () => {
               await setDayConfirmed(db, selected, !data.selectedConfirmed);
@@ -121,12 +121,12 @@ export default function CalendarScreen() {
         ) : null}
       </ScrollView>
 
-      <LogUsageSheet
-        visible={usageOpen}
-        substances={data?.substances ?? []}
+      <LogIntakeSheet
+        visible={intakeOpen}
+        items={data?.items ?? []}
         forDate={selected}
         currentTotals={dayTotals}
-        onClose={() => setUsageOpen(false)}
+        onClose={() => setIntakeOpen(false)}
         onSaved={reload}
       />
     </Screen>

@@ -9,8 +9,8 @@ import { Chip } from '@/components/ui/chip';
 import { Sheet } from '@/components/ui/sheet';
 import { TextField } from '@/components/ui/text-field';
 import { Spacing } from '@/constants/theme';
-import { addUsage, setDailyTotal } from '@/db/substances';
-import { type Substance } from '@/db/types';
+import { addIntake, setDailyTotal } from '@/db/items';
+import { type Item } from '@/db/types';
 import { parseDateKey, todayKey } from '@/lib/dates';
 
 /** Initial picker time: "now" when logging today, midday when backfilling. */
@@ -21,64 +21,64 @@ function defaultTime(forDate: string): Date {
   return d;
 }
 
-/** Log a substance usage event (or set the day's total for daily-total-only substances). */
-export function LogUsageSheet({
+/** Log a item usage event (or set the day's total for daily-total-only items). */
+export function LogIntakeSheet({
   visible,
   ...props
 }: {
   visible: boolean;
-  substances: Substance[];
+  items: Item[];
   forDate: string;
-  /** current day totals keyed by substance id, used to prefill daily-total-only substances */
+  /** current day totals keyed by item id, used to prefill daily-total-only items */
   currentTotals: Map<number, number>;
   onClose: () => void;
   onSaved: () => void;
 }) {
   // Mount fresh on each open so state starts clean.
   if (!visible) return null;
-  return <LogUsageSheetContent {...props} />;
+  return <LogIntakeSheetContent {...props} />;
 }
 
-function LogUsageSheetContent({
-  substances,
+function LogIntakeSheetContent({
+  items,
   forDate,
   currentTotals,
   onClose,
   onSaved,
 }: {
-  substances: Substance[];
+  items: Item[];
   forDate: string;
   currentTotals: Map<number, number>;
   onClose: () => void;
   onSaved: () => void;
 }) {
   const db = useSQLiteContext();
-  const [substance, setSubstance] = useState<Substance | null>(null);
+  const [item, setItem] = useState<Item | null>(null);
   const [amountText, setAmountText] = useState('');
   const [route, setRoute] = useState<string | null>(null);
   const [time, setTime] = useState(() => defaultTime(forDate));
 
-  const pickSubstance = (s: Substance) => {
-    setSubstance(s);
+  const pickItem = (s: Item) => {
+    setItem(s);
     setRoute(s.routes.length === 1 ? s.routes[0] : null);
     setAmountText(s.dailyTotalOnly ? String(currentTotals.get(s.id) ?? '') : '');
   };
 
   const amount = parseFloat(amountText.replace(',', '.'));
-  const needsRoute = (substance?.routes.length ?? 0) > 1 && !substance?.dailyTotalOnly;
-  const needsTime = substance !== null && !substance.dailyTotalOnly;
+  const needsRoute = (item?.routes.length ?? 0) > 1 && !item?.dailyTotalOnly;
+  const needsTime = item !== null && !item.dailyTotalOnly;
   const valid =
-    substance !== null && !isNaN(amount) && amount >= 0 && (!needsRoute || route !== null);
+    item !== null && !isNaN(amount) && amount >= 0 && (!needsRoute || route !== null);
 
   const save = async () => {
-    if (!substance || !valid) return;
-    if (substance.dailyTotalOnly) {
-      await setDailyTotal(db, substance.id, forDate, amount);
+    if (!item || !valid) return;
+    if (item.dailyTotalOnly) {
+      await setDailyTotal(db, item.id, forDate, amount);
     } else {
       const d = parseDateKey(forDate);
       d.setHours(time.getHours(), time.getMinutes(), 0, 0);
-      await addUsage(db, {
-        substanceId: substance.id,
+      await addIntake(db, {
+        itemId: item.id,
         forDate,
         timestampMs: d.getTime(),
         amount,
@@ -90,24 +90,24 @@ function LogUsageSheetContent({
   };
 
   return (
-    <Sheet visible onClose={onClose} title={substance ? substance.name : 'Log usage'}>
-      {substances.length === 0 ? (
+    <Sheet visible onClose={onClose} title={item ? item.name : 'Log intake'}>
+      {items.length === 0 ? (
         <ThemedText themeColor="textSecondary">
-          No substances configured yet — add them in Settings.
+          No items configured yet — add them in Settings.
         </ThemedText>
-      ) : !substance ? (
+      ) : !item ? (
         <View style={styles.chips}>
-          {substances.map((s) => (
-            <Chip key={s.id} label={s.name} onPress={() => pickSubstance(s)} />
+          {items.map((s) => (
+            <Chip key={s.id} label={s.name} onPress={() => pickItem(s)} />
           ))}
         </View>
       ) : (
         <>
           <TextField
             label={
-              substance.dailyTotalOnly
-                ? `Total for the day (${substance.unit})`
-                : `Amount (${substance.unit})`
+              item.dailyTotalOnly
+                ? `Total for the day (${item.unit})`
+                : `Amount (${item.unit})`
             }
             value={amountText}
             onChangeText={setAmountText}
@@ -121,7 +121,7 @@ function LogUsageSheetContent({
                 Route
               </ThemedText>
               <View style={styles.chips}>
-                {substance.routes.map((r) => (
+                {item.routes.map((r) => (
                   <Chip key={r} label={r} selected={route === r} onPress={() => setRoute(r)} />
                 ))}
               </View>
@@ -145,7 +145,7 @@ function LogUsageSheetContent({
             </>
           ) : null}
           <Button label="Save" onPress={save} disabled={!valid} />
-          <Button label="Back" variant="secondary" onPress={() => setSubstance(null)} />
+          <Button label="Back" variant="secondary" onPress={() => setItem(null)} />
         </>
       )}
     </Sheet>

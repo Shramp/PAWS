@@ -1,4 +1,5 @@
-export interface Substance {
+/** Something you take: a medication, supplement, drink — anything with a unit. */
+export interface Item {
   id: number;
   name: string;
   unit: string;
@@ -9,24 +10,24 @@ export interface Substance {
   sortOrder: number;
 }
 
-export interface UsageEvent {
+export interface IntakeEvent {
   id: number;
-  substanceId: number;
+  itemId: number;
   forDate: string;
-  /** null for daily-total-only substances */
+  /** null for daily-total-only items */
   timestampMs: number | null;
   amount: number;
   route: string | null;
 }
 
-export interface UsageEventWithSubstance extends UsageEvent {
-  substanceName: string;
+export interface IntakeEventWithItem extends IntakeEvent {
+  itemName: string;
   unit: string;
 }
 
-export interface SubstanceTotal {
-  substanceId: number;
-  substanceName: string;
+export interface ItemTotal {
+  itemId: number;
+  itemName: string;
   unit: string;
   total: number;
 }
