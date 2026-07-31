@@ -52,8 +52,25 @@ src/
   lib/          # date-key helpers
 scripts/
   gen-icons.mjs      # regenerates the paw icon set (needs @resvg/resvg-js)
+  seed-demo.mjs      # generates importable demo data (see below)
   convert-backup.mjs # one-off: converts pre-rename backups to the current format
 ```
+
+### Demo data
+
+```bash
+node scripts/seed-demo.mjs paws-demo.json          # 60 days, ending today
+node scripts/seed-demo.mjs demo.json --days 90 --end 2026-07-31
+```
+
+Writes a backup file to import via **Settings → Import data…** (this replaces
+whatever is in the app, so export real data first). Output is deterministic —
+the same arguments always produce the same file, so screenshots stay stable.
+
+It generates caffeine (a few servings most mornings), melatonin (a single
+nightly daily-total dose), and alcohol (weekend-heavy, with sessions that run
+past midnight to exercise the 7am day boundary), plus explicitly-confirmed
+nothing-taken days.
 
 ### Data model
 
