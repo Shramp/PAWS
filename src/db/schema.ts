@@ -39,17 +39,24 @@ CREATE TABLE IF NOT EXISTS confirmed_days (
 );
 `;
 
+/**
+ * Tables that predate the July 2026 "substance" → "item" rename. A database
+ * created before it carries user_version = 2 with entirely different table
+ * names, so version alone can't tell us whether the current schema exists.
+ */
+const LEGACY_TABLES = ['substances', 'usage_events', 'trackers', 'daily_entries', 'todos'];
+
 export async function initDb(db: SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
   await db.execAsync('PRAGMA foreign_keys = ON');
 
-  const row = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
-  const version = row?.user_version ?? 0;
-
-  if (version < 1) {
-    await db.withTransactionAsync(async () => {
-      await db.execAsync(SCHEMA_V1);
-      await db.execAsync('PRAGMA user_version = 1');
-    });
-  }
+  // Create anything missing rather than gating on user_version: a pre-rename
+  // database reports version 2 while lacking every table we now need.
+  await db.withTransactionAsync(async () => {
+    await db.execAsync(SCHEMA_V1);
+    for (const table of LEGACY_TABLES) {
+      await db.execAsync(`DROP TABLE IF EXISTS ${table}`);
+    }
+    await db.execAsync('PRAGMA user_version = 1');
+  });
 }
