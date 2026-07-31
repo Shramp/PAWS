@@ -1,10 +1,29 @@
 /**
  * All dates in the app are "date keys": local-timezone YYYY-MM-DD strings.
- * Entries are keyed by the local day they apply to, independent of when they
- * were entered (backdating is a first-class feature).
+ * Entries are keyed by the day they apply to, independent of when they were
+ * entered (backdating is a first-class feature).
+ *
+ * A tracking day runs 6am → 6am, so late-night activity belongs to the day
+ * you were awake for: 3am on Jul 24 counts as Jul 23. Everything downstream
+ * (totals, weeks, calendar, trends) inherits this because it all flows
+ * through `dateKey`.
  */
 
+/** Hour at which a new tracking day begins (local time). */
+export const DAY_START_HOUR = 6;
+
+/** The date key a given moment belongs to, honoring the 6am boundary. */
 export function dateKey(d: Date): string {
+  const shifted = new Date(d);
+  shifted.setHours(shifted.getHours() - DAY_START_HOUR);
+  const y = shifted.getFullYear();
+  const m = String(shifted.getMonth() + 1).padStart(2, '0');
+  const day = String(shifted.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** Calendar date key ignoring the 6am rule — for labels and grid building. */
+export function calendarDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
   const day = String(d.getDate()).padStart(2, '0');
@@ -13,6 +32,14 @@ export function dateKey(d: Date): string {
 
 export function todayKey(): string {
   return dateKey(new Date());
+}
+
+/** When the tracking day for `key` ends — i.e. the next 6am. Used to schedule rollover. */
+export function endOfTrackingDay(key: string): Date {
+  const d = parseDateKey(key);
+  d.setDate(d.getDate() + 1);
+  d.setHours(DAY_START_HOUR, 0, 0, 0);
+  return d;
 }
 
 /** Parse a date key into a Date at local midnight. */
@@ -82,6 +109,18 @@ export function formatTime(ms: number): string {
 }
 
 /**
+ * Wall-clock Date for a time entered against `forDate`. Hours before
+ * DAY_START_HOUR belong to the following calendar day (2am on the Jul 23
+ * tracking day is really Jul 24 at 2am).
+ */
+export function timestampForDayAndTime(forDate: string, hours: number, minutes: number): Date {
+  const d = parseDateKey(forDate);
+  if (hours < DAY_START_HOUR) d.setDate(d.getDate() + 1);
+  d.setHours(hours, minutes, 0, 0);
+  return d;
+}
+
+/**
  * Month grid for a calendar view: array of weeks (Monday-first), each week an
  * array of 7 date keys or null for cells outside the month.
  */
@@ -92,7 +131,8 @@ export function monthGrid(year: number, month: number): (string | null)[][] {
 
   const cells: (string | null)[] = Array(leadingBlanks).fill(null);
   for (let day = 1; day <= daysInMonth; day++) {
-    cells.push(dateKey(new Date(year, month, day)));
+    // Calendar cells are literal dates; the 6am rule applies to *entries*, not the grid.
+    cells.push(calendarDateKey(new Date(year, month, day)));
   }
   while (cells.length % 7 !== 0) cells.push(null);
 

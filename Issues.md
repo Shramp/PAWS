@@ -1,13 +1,35 @@
 # Issues
 
-## "today" screen does not update to current day
+## Done
 
-App requires closing and opening for today to update to current day. This is a bit tricky because sometimes we want to treat an entry past midnight as the prev day. Example: 3am July 24th should be treated as July 23rd, not July 24th. What is a reasonable cutoff? probably 6 am. Let's have the "today" screen switch over to the next day at 6am. Also update all of the trends, totals, metrics, calendar view etc to reflect this. Total for a day goes from 6am - 6am. Also applies to days used for start/end of weeks.
+### ~~"today" screen does not update to current day~~ ✅
 
-## allow editing of usage entries
+Fixed: a tracking day now runs **6am → 6am**, so 3am July 24 counts as July 23.
+`dateKey()` in `src/lib/dates.ts` applies the shift, and everything downstream
+(totals, weeks, calendar markers, trends, CSV) inherits it because it all flows
+through that one function. `useTodayKey()` re-checks on a timer at the next 6am
+and whenever the app returns to the foreground, so no restart is needed.
 
-Right now editing requires deleting and then re-entering. Add the ability to edit both time and amount, as well as delete
+Calendar *grid cells* still use literal dates (`calendarDateKey`) — the 6am rule
+applies to entries, not to which box July 24 lives in.
 
-## add ability to set default amount for a substance
+### ~~allow editing of usage entries~~ ✅
 
-Some substances are the same amount most of the time. Example Baclofen is almost always 10mg, but occassionaly more. In the substance configuration (both setup and editing), give the ability to set, edit a default amount. This amount will be auto-populated for an entry, but the amount can still be entered manually for an entry.
+Tapping any entry in the Today or Calendar list opens it in the log sheet, where
+amount, time, and route can be changed, or the entry deleted.
+
+### ~~add ability to set default amount for a substance~~ ✅
+
+Items have an optional "usual amount" (`items.default_amount`), set when
+creating or editing an item. It pre-fills the amount field when logging and is
+still editable per entry. Shown in Settings as "· usually 10".
+
+## Open
+
+Nothing currently queued.
+
+## Ideas / someday
+
+- Correlations between items (the old multi-tracker idea, descoped in v1)
+- Android verification pass — the app has never been run on Android
+- Editing the *item* of an existing entry (currently only amount/time/route)

@@ -112,6 +112,7 @@ export default function SettingsScreen() {
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">
                   {item.unit}
+                  {item.defaultAmount !== null ? ` · usually ${item.defaultAmount}` : ''}
                   {item.dailyTotalOnly ? ' · daily total' : ''}
                 </ThemedText>
               </GlassCard>

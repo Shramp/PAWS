@@ -18,10 +18,12 @@ import {
   setDayConfirmed,
   intakeForDate,
 } from '@/db/items';
+import { type IntakeEventWithItem } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
 import { useTheme } from '@/hooks/use-theme';
-import { dateKey, friendlyDate, monthTitle, parseDateKey, todayKey } from '@/lib/dates';
+import { useTodayKey } from '@/hooks/use-today-key';
+import { calendarDateKey, friendlyDate, monthTitle, parseDateKey } from '@/lib/dates';
 
 export default function CalendarScreen() {
   const theme = useTheme();
@@ -29,11 +31,15 @@ export default function CalendarScreen() {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth());
-  const [selected, setSelected] = useState(todayKey());
-  const [intakeOpen, setIntakeOpen] = useState(false);
+  const today = useTodayKey();
+  const [selected, setSelected] = useState(today);
+  const [sheet, setSheet] = useState<{ open: boolean; editing: IntakeEventWithItem | null }>({
+    open: false,
+    editing: null,
+  });
 
-  const monthStart = dateKey(new Date(year, month, 1));
-  const monthEnd = dateKey(new Date(year, month + 1, 0));
+  const monthStart = calendarDateKey(new Date(year, month, 1));
+  const monthEnd = calendarDateKey(new Date(year, month + 1, 0));
 
   const { data, reload, db } = useDbData(
     async (db) => {
@@ -82,7 +88,7 @@ export default function CalendarScreen() {
         label={monthTitle(year, month)}
         onPrev={() => stepMonth(-1)}
         onNext={() => stepMonth(1)}
-        onPressLabel={() => selectDay(todayKey())}
+        onPressLabel={() => selectDay(today)}
       />
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
         <MonthGrid
@@ -104,12 +110,15 @@ export default function CalendarScreen() {
         <IntakeList
           events={data?.intake ?? []}
           emptyLabel={
-            data?.selectedConfirmed ? 'Nothing taken — confirmed — clean paws. 🐾' : 'Nothing logged this day.'
+            data?.selectedConfirmed ? 'Nothing taken — confirmed. 🐾' : 'Nothing logged this day.'
           }
-          onChanged={reload}
+          onPressEvent={(event) => setSheet({ open: true, editing: event })}
         />
-        <Button label={`+ Log intake for ${friendlyDate(selected)}`} onPress={() => setIntakeOpen(true)} />
-        {data && data.intake.length === 0 && selected <= todayKey() ? (
+        <Button
+          label={`+ Log intake for ${friendlyDate(selected)}`}
+          onPress={() => setSheet({ open: true, editing: null })}
+        />
+        {data && data.intake.length === 0 && selected <= today ? (
           <Button
             label={data.selectedConfirmed ? 'Undo nothing-taken' : 'Mark nothing taken'}
             variant="secondary"
@@ -122,11 +131,12 @@ export default function CalendarScreen() {
       </ScrollView>
 
       <LogIntakeSheet
-        visible={intakeOpen}
+        visible={sheet.open && (data?.items.length ?? 0) > 0}
         items={data?.items ?? []}
         forDate={selected}
         currentTotals={dayTotals}
-        onClose={() => setIntakeOpen(false)}
+        editing={sheet.editing}
+        onClose={() => setSheet({ open: false, editing: null })}
         onSaved={reload}
       />
     </Screen>

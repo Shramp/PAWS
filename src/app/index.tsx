@@ -1,38 +1,48 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { IntakeList } from '@/components/intake-list';
 import { LogIntakeSheet } from '@/components/log-intake-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { IntakeList } from '@/components/intake-list';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
-import { isDayConfirmed, listItems, setDayConfirmed, intakeForDate } from '@/db/items';
+import { intakeForDate, isDayConfirmed, listItems, setDayConfirmed } from '@/db/items';
+import { type IntakeEventWithItem } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
-import { shortDate, todayKey } from '@/lib/dates';
+import { useTodayKey } from '@/hooks/use-today-key';
+import { shortDate } from '@/lib/dates';
 
 export default function TodayScreen() {
   const bottomPadding = useTabContentPadding();
-  const [intakeOpen, setIntakeOpen] = useState(false);
-  const today = todayKey();
+  const today = useTodayKey();
+  const [sheet, setSheet] = useState<{ open: boolean; editing: IntakeEventWithItem | null }>({
+    open: false,
+    editing: null,
+  });
 
-  const { data, reload, db } = useDbData(async (db) => {
-    const [items, intake, confirmed] = await Promise.all([
-      listItems(db),
-      intakeForDate(db, today),
-      isDayConfirmed(db, today),
-    ]);
-    return { items, intake, confirmed };
-  }, [today]);
+  const { data, reload, db } = useDbData(
+    async (db) => {
+      const [items, intake, confirmed] = await Promise.all([
+        listItems(db),
+        intakeForDate(db, today),
+        isDayConfirmed(db, today),
+      ]);
+      return { items, intake, confirmed };
+    },
+    [today],
+  );
 
   const dayTotals = useMemo(() => {
     const map = new Map<number, number>();
-    for (const u of data?.intake ?? []) {
-      map.set(u.itemId, (map.get(u.itemId) ?? 0) + u.amount);
+    for (const e of data?.intake ?? []) {
+      map.set(e.itemId, (map.get(e.itemId) ?? 0) + e.amount);
     }
     return map;
   }, [data]);
+
+  const closeSheet = () => setSheet({ open: false, editing: null });
 
   return (
     <Screen>
@@ -47,10 +57,10 @@ export default function TodayScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
         <IntakeList
           events={data?.intake ?? []}
-          emptyLabel={data?.confirmed ? 'Nothing taken — confirmed — clean paws. 🐾' : 'Nothing logged today.'}
-          onChanged={reload}
+          emptyLabel={data?.confirmed ? 'Nothing taken — confirmed. 🐾' : 'Nothing logged today.'}
+          onPressEvent={(event) => setSheet({ open: true, editing: event })}
         />
-        <Button label="+ Log intake" onPress={() => setIntakeOpen(true)} />
+        <Button label="+ Log intake" onPress={() => setSheet({ open: true, editing: null })} />
         {data && data.intake.length === 0 ? (
           <Button
             label={data.confirmed ? 'Undo nothing-taken' : 'Mark nothing taken'}
@@ -64,11 +74,12 @@ export default function TodayScreen() {
       </ScrollView>
 
       <LogIntakeSheet
-        visible={intakeOpen && (data?.items.length ?? 0) > 0}
+        visible={sheet.open && (data?.items.length ?? 0) > 0}
         items={data?.items ?? []}
         forDate={today}
         currentTotals={dayTotals}
-        onClose={() => setIntakeOpen(false)}
+        editing={sheet.editing}
+        onClose={closeSheet}
         onSaved={reload}
       />
     </Screen>

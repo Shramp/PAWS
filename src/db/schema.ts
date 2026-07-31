@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS items (
   routes TEXT NOT NULL DEFAULT '[]',
   daily_total_only INTEGER NOT NULL DEFAULT 0,
   archived INTEGER NOT NULL DEFAULT 0,
-  sort_order INTEGER NOT NULL DEFAULT 0
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  -- pre-filled in the log sheet when set; still editable per entry
+  default_amount REAL
 );
 
 CREATE TABLE IF NOT EXISTS intake_events (

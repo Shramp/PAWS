@@ -1,42 +1,24 @@
-import { useSQLiteContext } from 'expo-sqlite';
-import { Alert, Pressable, StyleSheet } from 'react-native';
+import { Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Spacing } from '@/constants/theme';
-import { deleteIntake } from '@/db/items';
 import { type IntakeEventWithItem } from '@/db/types';
 import { formatTime } from '@/lib/dates';
 
 /**
- * One day's usage events as a card: timestamped entries chronologically,
- * then daily-total entries. Tap a row to delete it.
+ * One day's intake as a card: timestamped entries chronologically, then
+ * daily-total entries. Tap a row to edit it.
  */
 export function IntakeList({
   events,
   emptyLabel,
-  onChanged,
+  onPressEvent,
 }: {
   events: IntakeEventWithItem[];
   emptyLabel: string;
-  onChanged: () => void;
+  onPressEvent: (event: IntakeEventWithItem) => void;
 }) {
-  const db = useSQLiteContext();
-
-  const confirmDelete = (u: IntakeEventWithItem) => {
-    Alert.alert('Delete entry?', `${u.itemName} — ${u.amount}${u.unit}`, [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Delete',
-        style: 'destructive',
-        onPress: async () => {
-          await deleteIntake(db, u.id);
-          onChanged();
-        },
-      },
-    ]);
-  };
-
   return (
     <GlassCard style={styles.card}>
       {events.length === 0 ? (
@@ -44,21 +26,21 @@ export function IntakeList({
           {emptyLabel}
         </ThemedText>
       ) : (
-        events.map((u) => (
-          <Pressable key={u.id} onPress={() => confirmDelete(u)} style={styles.row}>
+        events.map((e) => (
+          <Pressable key={e.id} onPress={() => onPressEvent(e)} style={styles.row}>
             <ThemedText type="code" themeColor="textSecondary" style={styles.time}>
-              {u.timestampMs !== null ? formatTime(u.timestampMs) : 'total'}
+              {e.timestampMs !== null ? formatTime(e.timestampMs) : 'total'}
             </ThemedText>
             <ThemedText type="small" style={styles.name}>
-              {u.itemName}
+              {e.itemName}
             </ThemedText>
             <ThemedText type="smallBold">
-              {u.amount}
-              {u.unit}
+              {e.amount}
+              {e.unit}
             </ThemedText>
-            {u.route ? (
+            {e.route ? (
               <ThemedText type="small" themeColor="textSecondary">
-                {u.route}
+                {e.route}
               </ThemedText>
             ) : null}
           </Pressable>

@@ -43,16 +43,21 @@ function ItemEditorSheetContent({
   const [unit, setUnit] = useState(item?.unit ?? '');
   const [routes, setRoutes] = useState<string[]>(item?.routes ?? []);
   const [dailyTotalOnly, setDailyTotalOnly] = useState(item?.dailyTotalOnly ?? false);
+  const [defaultAmountText, setDefaultAmountText] = useState(
+    item?.defaultAmount !== null && item?.defaultAmount !== undefined ? String(item.defaultAmount) : '',
+  );
 
   const toggleRoute = (route: string) => {
     setRoutes((prev) => (prev.includes(route) ? prev.filter((r) => r !== route) : [...prev, route]));
   };
 
+  const parsedDefault = parseFloat(defaultAmountText.replace(',', '.'));
+  const defaultAmount = defaultAmountText.trim() === '' || isNaN(parsedDefault) ? null : parsedDefault;
   const valid = name.trim().length > 0 && unit.trim().length > 0;
 
   const save = async () => {
     if (!valid) return;
-    const payload = { name: name.trim(), unit: unit.trim(), routes, dailyTotalOnly };
+    const payload = { name: name.trim(), unit: unit.trim(), routes, dailyTotalOnly, defaultAmount };
     if (item) {
       await updateItem(db, item.id, payload);
     } else {
@@ -73,6 +78,16 @@ function ItemEditorSheetContent({
     <Sheet visible onClose={onClose} title={item ? 'Edit item' : 'New item'}>
       <TextField label="Name" value={name} onChangeText={setName} placeholder="e.g. Caffeine" />
       <TextField label="Unit" value={unit} onChangeText={setUnit} placeholder="mg" autoCapitalize="none" />
+      <TextField
+        label="Usual amount (optional)"
+        value={defaultAmountText}
+        onChangeText={setDefaultAmountText}
+        keyboardType="decimal-pad"
+        placeholder="e.g. 10"
+      />
+      <ThemedText type="small" themeColor="textSecondary">
+        Pre-filled when logging; you can still change it per entry.
+      </ThemedText>
 
       <ThemedText type="small" themeColor="textSecondary">
         Routes (pick all that apply — asked when logging only if more than one)

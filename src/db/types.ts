@@ -8,7 +8,12 @@ export interface Item {
   dailyTotalOnly: boolean;
   archived: boolean;
   sortOrder: number;
+  /** pre-filled when logging if set; always editable per entry */
+  defaultAmount: number | null;
 }
+
+/** Fields an item editor writes. */
+export type ItemInput = Omit<Item, 'id' | 'archived' | 'sortOrder'>;
 
 export interface IntakeEvent {
   id: number;

@@ -1,6 +1,12 @@
 import { type SQLiteDatabase } from 'expo-sqlite';
 
-import { type IntakeEvent, type IntakeEventWithItem, type Item, type ItemTotal } from '@/db/types';
+import {
+  type IntakeEvent,
+  type IntakeEventWithItem,
+  type Item,
+  type ItemInput,
+  type ItemTotal,
+} from '@/db/types';
 import { addDays } from '@/lib/dates';
 
 interface ItemRow {
@@ -11,6 +17,7 @@ interface ItemRow {
   daily_total_only: number;
   archived: number;
   sort_order: number;
+  default_amount: number | null;
 }
 
 function toItem(row: ItemRow): Item {
@@ -22,6 +29,7 @@ function toItem(row: ItemRow): Item {
     dailyTotalOnly: row.daily_total_only === 1,
     archived: row.archived === 1,
     sortOrder: row.sort_order,
+    defaultAmount: row.default_amount,
   };
 }
 
@@ -34,33 +42,28 @@ export async function listItems(db: SQLiteDatabase, includeArchived = false): Pr
   return rows.map(toItem);
 }
 
-export async function createItem(
-  db: SQLiteDatabase,
-  item: { name: string; unit: string; routes: string[]; dailyTotalOnly: boolean },
-): Promise<number> {
+export async function createItem(db: SQLiteDatabase, item: ItemInput): Promise<number> {
   const max = await db.getFirstAsync<{ m: number | null }>('SELECT MAX(sort_order) AS m FROM items');
   const result = await db.runAsync(
-    'INSERT INTO items (name, unit, routes, daily_total_only, sort_order) VALUES (?, ?, ?, ?, ?)',
+    'INSERT INTO items (name, unit, routes, daily_total_only, default_amount, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
     item.name,
     item.unit,
     JSON.stringify(item.routes),
     item.dailyTotalOnly ? 1 : 0,
+    item.defaultAmount,
     (max?.m ?? 0) + 1,
   );
   return result.lastInsertRowId;
 }
 
-export async function updateItem(
-  db: SQLiteDatabase,
-  id: number,
-  item: { name: string; unit: string; routes: string[]; dailyTotalOnly: boolean },
-) {
+export async function updateItem(db: SQLiteDatabase, id: number, item: ItemInput) {
   await db.runAsync(
-    'UPDATE items SET name = ?, unit = ?, routes = ?, daily_total_only = ? WHERE id = ?',
+    'UPDATE items SET name = ?, unit = ?, routes = ?, daily_total_only = ?, default_amount = ? WHERE id = ?',
     item.name,
     item.unit,
     JSON.stringify(item.routes),
     item.dailyTotalOnly ? 1 : 0,
+    item.defaultAmount,
     id,
   );
 }
@@ -117,6 +120,22 @@ export async function setDailyTotal(db: SQLiteDatabase, itemId: number, forDate:
       );
     }
   });
+}
+
+/** Edit an existing entry's amount, time, and route (the item itself doesn't change). */
+export async function updateIntake(
+  db: SQLiteDatabase,
+  id: number,
+  e: { forDate: string; timestampMs: number | null; amount: number; route: string | null },
+) {
+  await db.runAsync(
+    'UPDATE intake_events SET for_date = ?, timestamp_ms = ?, amount = ?, route = ? WHERE id = ?',
+    e.forDate,
+    e.timestampMs,
+    e.amount,
+    e.route,
+    id,
+  );
 }
 
 export async function deleteIntake(db: SQLiteDatabase, id: number) {
