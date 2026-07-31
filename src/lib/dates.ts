@@ -48,10 +48,17 @@ export function parseDateKey(key: string): Date {
   return new Date(y, m - 1, d);
 }
 
+/**
+ * Shift a date key by whole days.
+ *
+ * Uses `calendarDateKey`, not `dateKey`: the input is already a key, so the
+ * day-start rule has been applied. Running it through `dateKey` again would
+ * subtract DAY_START_HOUR from local midnight and land a day early.
+ */
 export function addDays(key: string, days: number): string {
   const d = parseDateKey(key);
   d.setDate(d.getDate() + days);
-  return dateKey(d);
+  return calendarDateKey(d);
 }
 
 /** Monday of the week containing `key`. */
@@ -59,7 +66,7 @@ export function startOfWeekKey(key: string): string {
   const d = parseDateKey(key);
   const dow = (d.getDay() + 6) % 7; // Mon=0 ... Sun=6
   d.setDate(d.getDate() - dow);
-  return dateKey(d);
+  return calendarDateKey(d);
 }
 
 const WEEKDAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
