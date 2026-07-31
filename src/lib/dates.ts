@@ -3,16 +3,16 @@
  * Entries are keyed by the day they apply to, independent of when they were
  * entered (backdating is a first-class feature).
  *
- * A tracking day runs 6am → 6am, so late-night activity belongs to the day
+ * A tracking day runs 7am → 7am, so late-night activity belongs to the day
  * you were awake for: 3am on Jul 24 counts as Jul 23. Everything downstream
  * (totals, weeks, calendar, trends) inherits this because it all flows
  * through `dateKey`.
  */
 
 /** Hour at which a new tracking day begins (local time). */
-export const DAY_START_HOUR = 6;
+export const DAY_START_HOUR = 7;
 
-/** The date key a given moment belongs to, honoring the 6am boundary. */
+/** The date key a given moment belongs to, honoring DAY_START_HOUR. */
 export function dateKey(d: Date): string {
   const shifted = new Date(d);
   shifted.setHours(shifted.getHours() - DAY_START_HOUR);
@@ -22,7 +22,7 @@ export function dateKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-/** Calendar date key ignoring the 6am rule — for labels and grid building. */
+/** Calendar date key ignoring DAY_START_HOUR — for labels and grid building. */
 export function calendarDateKey(d: Date): string {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -34,7 +34,7 @@ export function todayKey(): string {
   return dateKey(new Date());
 }
 
-/** When the tracking day for `key` ends — i.e. the next 6am. Used to schedule rollover. */
+/** When the tracking day for `key` ends — the next DAY_START_HOUR. Used to schedule rollover. */
 export function endOfTrackingDay(key: string): Date {
   const d = parseDateKey(key);
   d.setDate(d.getDate() + 1);
@@ -131,7 +131,7 @@ export function monthGrid(year: number, month: number): (string | null)[][] {
 
   const cells: (string | null)[] = Array(leadingBlanks).fill(null);
   for (let day = 1; day <= daysInMonth; day++) {
-    // Calendar cells are literal dates; the 6am rule applies to *entries*, not the grid.
+    // Calendar cells are literal dates; the day-start rule applies to *entries*, not the grid.
     cells.push(calendarDateKey(new Date(year, month, day)));
   }
   while (cells.length % 7 !== 0) cells.push(null);

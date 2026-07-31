@@ -4,13 +4,13 @@
 
 ### ~~"today" screen does not update to current day~~ ✅
 
-Fixed: a tracking day now runs **6am → 6am**, so 3am July 24 counts as July 23.
+Fixed: a tracking day now runs **7am → 7am**, so 3am July 24 counts as July 23.
 `dateKey()` in `src/lib/dates.ts` applies the shift, and everything downstream
 (totals, weeks, calendar markers, trends, CSV) inherits it because it all flows
-through that one function. `useTodayKey()` re-checks on a timer at the next 6am
+through that one function. `useTodayKey()` re-checks on a timer at the next 7am
 and whenever the app returns to the foreground, so no restart is needed.
 
-Calendar *grid cells* still use literal dates (`calendarDateKey`) — the 6am rule
+Calendar *grid cells* still use literal dates (`calendarDateKey`) — the 7am rule
 applies to entries, not to which box July 24 lives in.
 
 ### ~~allow editing of usage entries~~ ✅

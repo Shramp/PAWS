@@ -160,7 +160,9 @@ function LogIntakeSheetContent({
             <>
               <ThemedText type="small" themeColor="textSecondary">
                 Time
-                {time.getHours() < DAY_START_HOUR ? '  ·  after midnight, counts for this day' : ''}
+                {time.getHours() < DAY_START_HOUR
+                  ? `  ·  midnight – ${DAY_START_HOUR} am counts for this night`
+                  : ''}
               </ThemedText>
               <DateTimePicker
                 value={time}

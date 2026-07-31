@@ -4,9 +4,9 @@ import { AppState } from 'react-native';
 import { endOfTrackingDay, todayKey } from '@/lib/dates';
 
 /**
- * The current tracking-day key, kept fresh: it rolls over on its own at 6am
- * and re-checks whenever the app returns to the foreground (so a phone that
- * sat backgrounded overnight shows the right day immediately).
+ * The current tracking-day key, kept fresh: it rolls over on its own at the
+ * day-start hour and re-checks when the app returns to the foreground (so a phone
+ * that sat backgrounded overnight shows the right day immediately).
  */
 export function useTodayKey(): string {
   const [key, setKey] = useState(todayKey);
