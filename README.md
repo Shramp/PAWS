@@ -2,6 +2,11 @@
 
 Personal, offline-only usage tracking app. All data lives in a local SQLite database on the phone — no server, no network, no sync.
 
+PAWS could stand for:
+
+- **P**ersonal **A**wareness **W**ithout **S**hame
+- **P**urrfectly **A**dequate **W**ellness **S**tats
+
 ## What it does
 
 - **Log usage events** — timestamp (now or manual), amount, and administration route per substance. Every entry can be backdated.
