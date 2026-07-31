@@ -1,10 +1,10 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BarChart, type BarDatum } from '@/components/bar-chart';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { GlassCard } from '@/components/ui/glass-card';
+import { Screen } from '@/components/ui/screen';
 import { Chip } from '@/components/ui/chip';
 import { Spacing } from '@/constants/theme';
 import { dailyTotalsForSubstance, firstEntryDate, listSubstances, trackedDatesInRange } from '@/db/substances';
@@ -112,8 +112,7 @@ export default function TrendsScreen() {
   const clearSelection = () => setSelectedBar(null);
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <Screen>
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
@@ -172,7 +171,7 @@ export default function TrendsScreen() {
             </ThemedText>
           ) : (
             <>
-              <ThemedView type="backgroundElement" style={styles.chartCard}>
+              <GlassCard style={styles.chartCard}>
                 <ThemedText type="smallBold">
                   {selectedDatum
                     ? `${periodLabel(selectedDatum.key)} · ${round(selectedDatum.total)}${substance.unit}`
@@ -192,8 +191,8 @@ export default function TrendsScreen() {
                   selectedKey={selectedBar}
                   onSelect={(key) => setSelectedBar(key === selectedBar ? null : key)}
                 />
-              </ThemedView>
-              <ThemedView type="backgroundElement" style={styles.statsCard}>
+              </GlassCard>
+              <GlassCard style={styles.statsCard}>
                 <View style={styles.stat}>
                   <ThemedText type="small" themeColor="textSecondary">
                     Total ({count}
@@ -221,26 +220,18 @@ export default function TrendsScreen() {
                     {zeroPeriods}/{trackedPeriods} tracked
                   </ThemedText>
                 </View>
-              </ThemedView>
+              </GlassCard>
             </>
           )}
         </ScrollView>
-      </SafeAreaView>
-    </ThemedView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Spacing.two,
-    gap: Spacing.three,
-  },
   chipBar: {
     flexGrow: 0,
+    marginBottom: Spacing.three,
   },
   chipBarContent: {
     gap: Spacing.two,
@@ -251,6 +242,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     paddingHorizontal: Spacing.three,
+    marginBottom: Spacing.three,
   },
   rangeDivider: {
     width: Spacing.two,
@@ -261,12 +253,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   chartCard: {
-    borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.two,
   },
   statsCard: {
-    borderRadius: Spacing.three,
     padding: Spacing.three,
     flexDirection: 'row',
     justifyContent: 'space-between',

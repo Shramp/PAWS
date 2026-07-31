@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Spacing } from '@/constants/theme';
 
 /** Bottom-sheet style modal used for all entry/edit forms. */
@@ -30,7 +30,7 @@ export function Sheet({
         style={styles.backdropContainer}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.backdrop} onPress={onClose} />
-        <ThemedView style={styles.sheet}>
+        <GlassCard style={styles.sheet}>
           <ThemedText type="subtitle" style={styles.title}>
             {title}
           </ThemedText>
@@ -40,7 +40,7 @@ export function Sheet({
             style={styles.scroll}>
             {children}
           </ScrollView>
-        </ThemedView>
+        </GlassCard>
       </KeyboardAvoidingView>
     </Modal>
   );
@@ -62,6 +62,8 @@ const styles = StyleSheet.create({
   sheet: {
     borderTopLeftRadius: Spacing.four,
     borderTopRightRadius: Spacing.four,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     paddingTop: Spacing.four,
     maxHeight: '85%',
   },

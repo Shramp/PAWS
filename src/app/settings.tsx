@@ -3,11 +3,11 @@ import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SubstanceEditorSheet } from '@/components/substance-editor-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { GlassCard } from '@/components/ui/glass-card';
+import { Screen } from '@/components/ui/screen';
 import { Button } from '@/components/ui/button';
 import { Spacing } from '@/constants/theme';
 import { exportBackup, importBackup, parseBackup } from '@/db/backup';
@@ -98,15 +98,14 @@ export default function SettingsScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
+    <Screen>
         <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
           <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
             SUBSTANCES
           </ThemedText>
           {(substances ?? []).map((substance) => (
             <Pressable key={substance.id} onPress={() => setSheet({ open: true, substance })}>
-              <ThemedView type="backgroundElement" style={[styles.row, substance.archived && styles.archived]}>
+              <GlassCard style={[styles.row, substance.archived && styles.archived]}>
                 <ThemedText style={styles.rowName}>
                   {substance.name}
                   {substance.archived ? '  (archived)' : ''}
@@ -115,7 +114,7 @@ export default function SettingsScreen() {
                   {substance.unit}
                   {substance.dailyTotalOnly ? ' · daily total' : ''}
                 </ThemedText>
-              </ThemedView>
+              </GlassCard>
             </Pressable>
           ))}
           {(substances ?? []).length === 0 ? (
@@ -137,7 +136,6 @@ export default function SettingsScreen() {
             daily and weekly totals per substance for spreadsheets.
           </ThemedText>
         </ScrollView>
-      </SafeAreaView>
 
       <SubstanceEditorSheet
         visible={sheet.open}
@@ -145,18 +143,11 @@ export default function SettingsScreen() {
         onClose={() => setSheet({ open: false, substance: null })}
         onSaved={reload}
       />
-    </ThemedView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Spacing.two,
-  },
   content: {
     padding: Spacing.three,
     gap: Spacing.two,
@@ -170,7 +161,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderRadius: Spacing.three,
     padding: Spacing.three,
   },
   rowName: {

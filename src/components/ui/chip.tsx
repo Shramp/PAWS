@@ -1,8 +1,12 @@
+import * as Haptics from 'expo-haptics';
 import { Pressable, StyleSheet } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function Chip({
   label,
@@ -18,19 +22,34 @@ export function Chip({
 }) {
   const theme = useTheme();
   const fill = color ?? theme.accent;
+  const scale = useSharedValue(1);
+  const animatedStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.get() }] }));
 
   return (
-    <Pressable
-      onPress={onPress}
-      style={({ pressed }) => [
+    <AnimatedPressable
+      onPress={
+        onPress
+          ? () => {
+              Haptics.selectionAsync();
+              onPress();
+            }
+          : undefined
+      }
+      onPressIn={() => {
+        scale.set(withSpring(0.92, { damping: 18, stiffness: 400 }));
+      }}
+      onPressOut={() => {
+        scale.set(withSpring(1, { damping: 10, stiffness: 300 }));
+      }}
+      style={[
         styles.chip,
         { backgroundColor: selected ? fill : theme.backgroundElement },
-        pressed && { opacity: 0.7 },
+        animatedStyle,
       ]}>
       <ThemedText type="small" style={selected ? { color: theme.onAccent } : undefined}>
         {label}
       </ThemedText>
-    </Pressable>
+    </AnimatedPressable>
   );
 }
 

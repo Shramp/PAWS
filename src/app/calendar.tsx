@@ -1,14 +1,14 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { LogUsageSheet } from '@/components/log-usage-sheet';
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
 import { UsageList } from '@/components/usage-list';
 import { Button } from '@/components/ui/button';
 import { MonthGrid } from '@/components/ui/month-grid';
 import { NavHeader } from '@/components/ui/nav-header';
+import { PawDot } from '@/components/ui/paw-dot';
+import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import {
   confirmedDaysInRange,
@@ -77,51 +77,49 @@ export default function CalendarScreen() {
   };
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView edges={['top']} style={styles.safeArea}>
-        <NavHeader
-          label={monthTitle(year, month)}
-          onPrev={() => stepMonth(-1)}
-          onNext={() => stepMonth(1)}
-          onPressLabel={() => selectDay(todayKey())}
+    <Screen>
+      <NavHeader
+        label={monthTitle(year, month)}
+        onPrev={() => stepMonth(-1)}
+        onNext={() => stepMonth(1)}
+        onPressLabel={() => selectDay(todayKey())}
+      />
+      <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
+        <MonthGrid
+          year={year}
+          month={month}
+          selectedDay={selected}
+          onPressDay={setSelected}
+          renderDay={(key) =>
+            data?.marked.has(key) ? (
+              <PawDot size={13} color={theme.accent} />
+            ) : data?.confirmed.has(key) ? (
+              <View style={[styles.zeroRing, { borderColor: theme.accentSecondary }]} />
+            ) : null
+          }
         />
-        <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
-          <MonthGrid
-            year={year}
-            month={month}
-            selectedDay={selected}
-            onPressDay={setSelected}
-            renderDay={(key) =>
-              data?.marked.has(key) ? (
-                <View style={[styles.dot, { backgroundColor: theme.accent }]} />
-              ) : data?.confirmed.has(key) ? (
-                <View style={[styles.zeroRing, { borderColor: theme.accentSecondary }]} />
-              ) : null
-            }
+        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+          {friendlyDate(selected).toUpperCase()}
+        </ThemedText>
+        <UsageList
+          events={data?.usage ?? []}
+          emptyLabel={
+            data?.selectedConfirmed ? 'Confirmed no-use day — clean paws. 🐾' : 'Nothing logged this day.'
+          }
+          onChanged={reload}
+        />
+        <Button label={`+ Log usage for ${friendlyDate(selected)}`} onPress={() => setUsageOpen(true)} />
+        {data && data.usage.length === 0 && selected <= todayKey() ? (
+          <Button
+            label={data.selectedConfirmed ? 'Undo no-use day' : 'Mark as no-use day'}
+            variant="secondary"
+            onPress={async () => {
+              await setDayConfirmed(db, selected, !data.selectedConfirmed);
+              reload();
+            }}
           />
-          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
-            {friendlyDate(selected).toUpperCase()}
-          </ThemedText>
-          <UsageList
-            events={data?.usage ?? []}
-            emptyLabel={
-              data?.selectedConfirmed ? 'No use this day — confirmed. ✓' : 'Nothing logged this day.'
-            }
-            onChanged={reload}
-          />
-          <Button label={`+ Log usage for ${friendlyDate(selected)}`} onPress={() => setUsageOpen(true)} />
-          {data && data.usage.length === 0 && selected <= todayKey() ? (
-            <Button
-              label={data.selectedConfirmed ? 'Undo no-use day' : 'Mark as no-use day'}
-              variant="secondary"
-              onPress={async () => {
-                await setDayConfirmed(db, selected, !data.selectedConfirmed);
-                reload();
-              }}
-            />
-          ) : null}
-        </ScrollView>
-      </SafeAreaView>
+        ) : null}
+      </ScrollView>
 
       <LogUsageSheet
         visible={usageOpen}
@@ -131,28 +129,15 @@ export default function CalendarScreen() {
         onClose={() => setUsageOpen(false)}
         onSaved={reload}
       />
-    </ThemedView>
+    </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  safeArea: {
-    flex: 1,
-    paddingTop: Spacing.two,
-    gap: Spacing.two,
-  },
   content: {
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.two,
     gap: Spacing.two,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
   zeroRing: {
     width: 8,

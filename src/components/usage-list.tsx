@@ -2,7 +2,7 @@ import { useSQLiteContext } from 'expo-sqlite';
 import { Alert, Pressable, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
+import { GlassCard } from '@/components/ui/glass-card';
 import { Spacing } from '@/constants/theme';
 import { deleteUsage } from '@/db/substances';
 import { type UsageEventWithSubstance } from '@/db/types';
@@ -38,7 +38,7 @@ export function UsageList({
   };
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
+    <GlassCard style={styles.card}>
       {events.length === 0 ? (
         <ThemedText type="small" themeColor="textSecondary">
           {emptyLabel}
@@ -64,13 +64,12 @@ export function UsageList({
           </Pressable>
         ))
       )}
-    </ThemedView>
+    </GlassCard>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Spacing.three,
     padding: Spacing.three,
     gap: Spacing.two,
   },
