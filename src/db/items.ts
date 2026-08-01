@@ -77,15 +77,19 @@ export async function updateItem(db: SQLiteDatabase, id: number, item: ItemInput
 
 /**
  * Items flagged `track_time_since`, with each one's most recent timestamped
- * intake (across all history, not just today). Daily-total entries have no
- * timestamp so they can't contribute a "time since".
+ * intake (across all history, not just today).
+ *
+ * Daily-total items are excluded even if the flag is somehow set: their
+ * entries carry no timestamp, so the card could only ever read "—". The
+ * editor hides the toggle for them, but a restored backup or a hand-edited
+ * database can still set it.
  */
 export async function timeSinceItems(db: SQLiteDatabase): Promise<TimeSinceItem[]> {
   const rows = await db.getAllAsync<{ id: number; name: string; last_ms: number | null }>(
     `SELECT i.id, i.name, MAX(e.timestamp_ms) AS last_ms
      FROM items i
      LEFT JOIN intake_events e ON e.item_id = i.id AND e.timestamp_ms IS NOT NULL
-     WHERE i.track_time_since = 1 AND i.archived = 0
+     WHERE i.track_time_since = 1 AND i.archived = 0 AND i.daily_total_only = 0
      GROUP BY i.id
      ORDER BY i.sort_order, i.id`,
   );

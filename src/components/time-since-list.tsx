@@ -8,9 +8,11 @@ import { type TimeSinceItem } from '@/db/types';
 import { formatElapsed } from '@/lib/dates';
 
 /**
- * "Time since last X" rows for items configured to track it. Re-renders once
- * a minute — the display granularity is minutes, so ticking faster would just
- * burn cycles.
+ * "Time since last X" hero cards for items configured to track it. Two per
+ * row, wrapping — the duration is the headline, the item name the caption.
+ *
+ * Re-renders once a minute: the display granularity is minutes, so ticking
+ * faster would just burn cycles.
  */
 export function TimeSinceList({ items }: { items: TimeSinceItem[] }) {
   const [now, setNow] = useState(() => Date.now());
@@ -36,34 +38,41 @@ export function TimeSinceList({ items }: { items: TimeSinceItem[] }) {
   if (items.length === 0) return null;
 
   return (
-    <GlassCard style={styles.card}>
+    <View style={styles.grid}>
       {items.map((item) => (
-        <View key={item.itemId} style={styles.row}>
-          <ThemedText type="small" style={styles.label}>
-            Time since last {item.itemName}
-          </ThemedText>
-          <ThemedText type="smallBold">
+        <GlassCard key={item.itemId} style={styles.card}>
+          <ThemedText style={styles.duration} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
             {item.lastTimestampMs === null ? '—' : formatElapsed(item.lastTimestampMs, now)}
           </ThemedText>
-        </View>
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+            since {item.itemName}
+          </ThemedText>
+        </GlassCard>
       ))}
-    </GlassCard>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  card: {
-    padding: Spacing.three,
-    gap: Spacing.two,
-  },
-  row: {
+  grid: {
     flexDirection: 'row',
-    alignItems: 'baseline',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
     gap: Spacing.two,
-    paddingVertical: Spacing.one,
   },
-  label: {
-    flex: 1,
+  card: {
+    // Two per row, growing to fill a lone trailing card. flexBasis sits just
+    // under half so two cards plus the gap never overflow the row.
+    flexBasis: '46%',
+    flexGrow: 1,
+    minWidth: 130,
+    alignItems: 'center',
+    paddingVertical: Spacing.four,
+    paddingHorizontal: Spacing.two,
+    gap: Spacing.one,
+  },
+  duration: {
+    fontSize: 34,
+    lineHeight: 40,
+    fontWeight: '700',
   },
 });
