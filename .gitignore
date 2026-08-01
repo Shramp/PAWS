@@ -41,3 +41,6 @@ example
 # generated native folders
 /ios
 /android
+
+# Claude Code local permission grants (machine-specific)
+.claude/settings.local.json

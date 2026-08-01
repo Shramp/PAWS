@@ -4,15 +4,18 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { GlassCard } from '@/components/ui/glass-card';
 import { Spacing } from '@/constants/theme';
+import { TIME_SINCE_WINDOW_MS } from '@/db/items';
 import { type TimeSinceItem } from '@/db/types';
 import { formatElapsed } from '@/lib/dates';
 
 /**
- * "Time since last X" hero cards for items configured to track it. Two per
- * row, wrapping — the duration is the headline, the item name the caption.
+ * "Time since last X" hero cards for items in active use. Two per row,
+ * wrapping — the duration is the headline, the item name the caption.
  *
  * Re-renders once a minute: the display granularity is minutes, so ticking
- * faster would just burn cycles.
+ * faster would just burn cycles. That tick also drops cards that age past
+ * the window while the screen sits open, so it matches the query's filter
+ * without waiting for a refetch.
  */
 export function TimeSinceList({ items }: { items: TimeSinceItem[] }) {
   const [now, setNow] = useState(() => Date.now());
@@ -35,14 +38,17 @@ export function TimeSinceList({ items }: { items: TimeSinceItem[] }) {
     };
   }, [items.length]);
 
-  if (items.length === 0) return null;
+  const active = items.filter(
+    (item) => item.lastTimestampMs !== null && now - item.lastTimestampMs < TIME_SINCE_WINDOW_MS,
+  );
+  if (active.length === 0) return null;
 
   return (
     <View style={styles.grid}>
-      {items.map((item) => (
+      {active.map((item) => (
         <GlassCard key={item.itemId} style={styles.card}>
           <ThemedText style={styles.duration} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.6}>
-            {item.lastTimestampMs === null ? '—' : formatElapsed(item.lastTimestampMs, now)}
+            {formatElapsed(item.lastTimestampMs!, now)}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
             since {item.itemName}

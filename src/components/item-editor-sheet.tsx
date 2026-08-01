@@ -123,7 +123,7 @@ function ItemEditorSheetContent({
           <View style={styles.switchLabel}>
             <ThemedText>Track time since last</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              Show a live countup at the top of Today
+              Live countup on Today, shown for 6h after each intake
             </ThemedText>
           </View>
           <Switch

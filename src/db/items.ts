@@ -75,9 +75,14 @@ export async function updateItem(db: SQLiteDatabase, id: number, item: ItemInput
   );
 }
 
+/** A timer only appears while its item is in active use — see timeSinceItems. */
+export const TIME_SINCE_WINDOW_MS = 6 * 60 * 60 * 1000;
+
 /**
- * Items flagged `track_time_since`, with each one's most recent timestamped
- * intake (across all history, not just today).
+ * Items flagged `track_time_since` whose most recent timestamped intake falls
+ * within TIME_SINCE_WINDOW_MS. These timers are for pacing during a session,
+ * not for tracking abstinence streaks, so a card that would read "5d 14h"
+ * simply doesn't appear.
  *
  * Daily-total items are excluded even if the flag is somehow set: their
  * entries carry no timestamp, so the card could only ever read "—". The
@@ -85,13 +90,16 @@ export async function updateItem(db: SQLiteDatabase, id: number, item: ItemInput
  * database can still set it.
  */
 export async function timeSinceItems(db: SQLiteDatabase): Promise<TimeSinceItem[]> {
-  const rows = await db.getAllAsync<{ id: number; name: string; last_ms: number | null }>(
+  const cutoff = Date.now() - TIME_SINCE_WINDOW_MS;
+  const rows = await db.getAllAsync<{ id: number; name: string; last_ms: number }>(
     `SELECT i.id, i.name, MAX(e.timestamp_ms) AS last_ms
      FROM items i
-     LEFT JOIN intake_events e ON e.item_id = i.id AND e.timestamp_ms IS NOT NULL
+     JOIN intake_events e ON e.item_id = i.id AND e.timestamp_ms IS NOT NULL
      WHERE i.track_time_since = 1 AND i.archived = 0 AND i.daily_total_only = 0
      GROUP BY i.id
+     HAVING last_ms >= ?
      ORDER BY i.sort_order, i.id`,
+    cutoff,
   );
   return rows.map((r) => ({ itemId: r.id, itemName: r.name, lastTimestampMs: r.last_ms }));
 }
