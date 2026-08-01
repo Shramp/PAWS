@@ -83,7 +83,7 @@ All dates are local-timezone `YYYY-MM-DD` keys; entries are keyed by the day the
 ## Installing on a phone
 
 - **iOS**: `npx expo run:ios --device --configuration Release` with the iPhone plugged in (needs Xcode; free Apple ID = 7-day resign, paid developer account = 1 year).
-- **Android**: `eas build -p android --profile preview` (or a local `npx expo run:android --variant release`) produces an APK to sideload.
+- **Android**: `npx eas-cli build --platform android --profile preview` builds an APK in Expo's cloud (no local Android SDK needed) and returns a download link plus a QR code on the build page. Open it on the phone to install; Android asks once to allow installs from that source. APKs don't expire, and Expo manages the signing keystore.
 
 Expo Go can't run this project on a physical device — the store builds are pinned to SDK 54 while this is SDK 57. The simulator is fine.
 

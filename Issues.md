@@ -26,10 +26,18 @@ still editable per entry. Shown in Settings as "· usually 10".
 
 ## Open
 
-Nothing currently queued.
+### Android is unverified
+
+An APK now builds via EAS and installs, but nobody has confirmed how the UI
+actually renders on Android. Known fallback paths that have never been
+exercised:
+
+- `GlassCard` → solid `ThemedView` (no liquid glass below iOS 26)
+- The time picker → Android's native clock dialog rather than the iOS wheel
+- `NativeTabs` → Material tab bar; check `useTabContentPadding` insets
+- Share sheet / document picker for export & import
 
 ## Ideas / someday
 
 - Correlations between items (the old multi-tracker idea, descoped in v1)
-- Android verification pass — the app has never been run on Android
 - Editing the *item* of an existing entry (currently only amount/time/route)
