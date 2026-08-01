@@ -117,6 +117,7 @@ export default function SettingsScreen() {
                   {item.unit}
                   {item.defaultAmount !== null ? ` · usually ${item.defaultAmount}` : ''}
                   {item.dailyTotalOnly ? ' · daily total' : ''}
+                  {item.trackTimeSince ? ' · time since' : ''}
                 </ThemedText>
               </GlassCard>
             </Pressable>

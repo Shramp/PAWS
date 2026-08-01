@@ -4,10 +4,11 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { IntakeList } from '@/components/intake-list';
 import { LogIntakeSheet } from '@/components/log-intake-sheet';
 import { ThemedText } from '@/components/themed-text';
+import { TimeSinceList } from '@/components/time-since-list';
 import { Button } from '@/components/ui/button';
 import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
-import { intakeForDate, isDayConfirmed, listItems, setDayConfirmed } from '@/db/items';
+import { intakeForDate, isDayConfirmed, listItems, setDayConfirmed, timeSinceItems } from '@/db/items';
 import { type IntakeEventWithItem } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
 import { useTabContentPadding } from '@/hooks/use-tab-content-padding';
@@ -24,12 +25,13 @@ export default function TodayScreen() {
 
   const { data, reload, db } = useDbData(
     async (db) => {
-      const [items, intake, confirmed] = await Promise.all([
+      const [items, intake, confirmed, timeSince] = await Promise.all([
         listItems(db),
         intakeForDate(db, today),
         isDayConfirmed(db, today),
+        timeSinceItems(db),
       ]);
-      return { items, intake, confirmed };
+      return { items, intake, confirmed, timeSince };
     },
     [today],
   );
@@ -55,12 +57,13 @@ export default function TodayScreen() {
         </ThemedText>
       </View>
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
+        <TimeSinceList items={data?.timeSince ?? []} />
+        <Button label="+ Log intake" onPress={() => setSheet({ open: true, editing: null })} />
         <IntakeList
           events={data?.intake ?? []}
           emptyLabel={data?.confirmed ? 'Nothing taken — confirmed. 🐾' : 'Nothing logged today.'}
           onPressEvent={(event) => setSheet({ open: true, editing: event })}
         />
-        <Button label="+ Log intake" onPress={() => setSheet({ open: true, editing: null })} />
         {data && data.intake.length === 0 ? (
           <Button
             label={data.confirmed ? 'Undo nothing-taken' : 'Mark nothing taken'}

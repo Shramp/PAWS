@@ -6,6 +6,7 @@ import {
   type Item,
   type ItemInput,
   type ItemTotal,
+  type TimeSinceItem,
 } from '@/db/types';
 import { addDays } from '@/lib/dates';
 
@@ -18,6 +19,7 @@ interface ItemRow {
   archived: number;
   sort_order: number;
   default_amount: number | null;
+  track_time_since: number;
 }
 
 function toItem(row: ItemRow): Item {
@@ -30,6 +32,7 @@ function toItem(row: ItemRow): Item {
     archived: row.archived === 1,
     sortOrder: row.sort_order,
     defaultAmount: row.default_amount,
+    trackTimeSince: row.track_time_since === 1,
   };
 }
 
@@ -45,12 +48,14 @@ export async function listItems(db: SQLiteDatabase, includeArchived = false): Pr
 export async function createItem(db: SQLiteDatabase, item: ItemInput): Promise<number> {
   const max = await db.getFirstAsync<{ m: number | null }>('SELECT MAX(sort_order) AS m FROM items');
   const result = await db.runAsync(
-    'INSERT INTO items (name, unit, routes, daily_total_only, default_amount, sort_order) VALUES (?, ?, ?, ?, ?, ?)',
+    `INSERT INTO items (name, unit, routes, daily_total_only, default_amount, track_time_since, sort_order)
+     VALUES (?, ?, ?, ?, ?, ?, ?)`,
     item.name,
     item.unit,
     JSON.stringify(item.routes),
     item.dailyTotalOnly ? 1 : 0,
     item.defaultAmount,
+    item.trackTimeSince ? 1 : 0,
     (max?.m ?? 0) + 1,
   );
   return result.lastInsertRowId;
@@ -58,14 +63,33 @@ export async function createItem(db: SQLiteDatabase, item: ItemInput): Promise<n
 
 export async function updateItem(db: SQLiteDatabase, id: number, item: ItemInput) {
   await db.runAsync(
-    'UPDATE items SET name = ?, unit = ?, routes = ?, daily_total_only = ?, default_amount = ? WHERE id = ?',
+    `UPDATE items SET name = ?, unit = ?, routes = ?, daily_total_only = ?, default_amount = ?,
+     track_time_since = ? WHERE id = ?`,
     item.name,
     item.unit,
     JSON.stringify(item.routes),
     item.dailyTotalOnly ? 1 : 0,
     item.defaultAmount,
+    item.trackTimeSince ? 1 : 0,
     id,
   );
+}
+
+/**
+ * Items flagged `track_time_since`, with each one's most recent timestamped
+ * intake (across all history, not just today). Daily-total entries have no
+ * timestamp so they can't contribute a "time since".
+ */
+export async function timeSinceItems(db: SQLiteDatabase): Promise<TimeSinceItem[]> {
+  const rows = await db.getAllAsync<{ id: number; name: string; last_ms: number | null }>(
+    `SELECT i.id, i.name, MAX(e.timestamp_ms) AS last_ms
+     FROM items i
+     LEFT JOIN intake_events e ON e.item_id = i.id AND e.timestamp_ms IS NOT NULL
+     WHERE i.track_time_since = 1 AND i.archived = 0
+     GROUP BY i.id
+     ORDER BY i.sort_order, i.id`,
+  );
+  return rows.map((r) => ({ itemId: r.id, itemName: r.name, lastTimestampMs: r.last_ms }));
 }
 
 export async function setItemArchived(db: SQLiteDatabase, id: number, archived: boolean) {

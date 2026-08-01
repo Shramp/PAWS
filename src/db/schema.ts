@@ -20,7 +20,9 @@ CREATE TABLE IF NOT EXISTS items (
   archived INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
   -- pre-filled in the log sheet when set; still editable per entry
-  default_amount REAL
+  default_amount REAL,
+  -- show a live "time since last …" row at the top of the Today screen
+  track_time_since INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS intake_events (
@@ -46,6 +48,20 @@ CREATE TABLE IF NOT EXISTS confirmed_days (
  */
 const LEGACY_TABLES = ['substances', 'usage_events', 'trackers', 'daily_entries', 'todos'];
 
+/**
+ * Columns added to `items` after its initial release. CREATE TABLE IF NOT
+ * EXISTS is a no-op on an existing table, so new columns need explicit ALTERs
+ * — each guarded by whether it's already present, which also covers fresh
+ * installs where SCHEMA_V1 created it.
+ */
+const ITEM_COLUMNS: { name: string; ddl: string }[] = [
+  { name: 'default_amount', ddl: 'ALTER TABLE items ADD COLUMN default_amount REAL' },
+  {
+    name: 'track_time_since',
+    ddl: 'ALTER TABLE items ADD COLUMN track_time_since INTEGER NOT NULL DEFAULT 0',
+  },
+];
+
 export async function initDb(db: SQLiteDatabase) {
   await db.execAsync('PRAGMA journal_mode = WAL');
   await db.execAsync('PRAGMA foreign_keys = ON');
@@ -59,4 +75,10 @@ export async function initDb(db: SQLiteDatabase) {
     }
     await db.execAsync('PRAGMA user_version = 1');
   });
+
+  const existing = await db.getAllAsync<{ name: string }>('PRAGMA table_info(items)');
+  const present = new Set(existing.map((c) => c.name));
+  for (const column of ITEM_COLUMNS) {
+    if (!present.has(column.name)) await db.execAsync(column.ddl);
+  }
 }

@@ -46,6 +46,7 @@ function ItemEditorSheetContent({
   const [defaultAmountText, setDefaultAmountText] = useState(
     item?.defaultAmount !== null && item?.defaultAmount !== undefined ? String(item.defaultAmount) : '',
   );
+  const [trackTimeSince, setTrackTimeSince] = useState(item?.trackTimeSince ?? false);
 
   const toggleRoute = (route: string) => {
     setRoutes((prev) => (prev.includes(route) ? prev.filter((r) => r !== route) : [...prev, route]));
@@ -57,7 +58,15 @@ function ItemEditorSheetContent({
 
   const save = async () => {
     if (!valid) return;
-    const payload = { name: name.trim(), unit: unit.trim(), routes, dailyTotalOnly, defaultAmount };
+    const payload = {
+      name: name.trim(),
+      unit: unit.trim(),
+      routes,
+      dailyTotalOnly,
+      defaultAmount,
+      // A daily-total item has no timestamps, so time-since can't apply.
+      trackTimeSince: dailyTotalOnly ? false : trackTimeSince,
+    };
     if (item) {
       await updateItem(db, item.id, payload);
     } else {
@@ -107,6 +116,23 @@ function ItemEditorSheetContent({
         </View>
         <Switch value={dailyTotalOnly} onValueChange={setDailyTotalOnly} trackColor={{ true: theme.accent }} />
       </View>
+
+      {/* Time since needs timestamps, which daily-total items don't have. */}
+      {!dailyTotalOnly ? (
+        <View style={styles.switchRow}>
+          <View style={styles.switchLabel}>
+            <ThemedText>Track time since last</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              Show a live countup at the top of Today
+            </ThemedText>
+          </View>
+          <Switch
+            value={trackTimeSince}
+            onValueChange={setTrackTimeSince}
+            trackColor={{ true: theme.accent }}
+          />
+        </View>
+      ) : null}
 
       <Button label={item ? 'Save changes' : 'Create item'} onPress={save} disabled={!valid} />
       {item ? (

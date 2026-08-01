@@ -116,6 +116,21 @@ export function formatTime(ms: number): string {
 }
 
 /**
+ * Elapsed time as a compact "3d 4h" / "5h 12m" / "8m" string. Days are shown
+ * once past 24h because "52h 10m" is harder to read than "2d 4h".
+ */
+export function formatElapsed(fromMs: number, nowMs: number): string {
+  const totalMinutes = Math.max(0, Math.floor((nowMs - fromMs) / 60000));
+  const days = Math.floor(totalMinutes / 1440);
+  const hours = Math.floor((totalMinutes % 1440) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  return `${minutes}m`;
+}
+
+/**
  * Wall-clock Date for a time entered against `forDate`. Hours before
  * DAY_START_HOUR belong to the following calendar day (2am on the Jul 23
  * tracking day is really Jul 24 at 2am).

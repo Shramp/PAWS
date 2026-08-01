@@ -10,6 +10,16 @@ export interface Item {
   sortOrder: number;
   /** pre-filled when logging if set; always editable per entry */
   defaultAmount: number | null;
+  /** show a live "time since last …" row at the top of the Today screen */
+  trackTimeSince: boolean;
+}
+
+/** A "time since last" row on the Today screen. */
+export interface TimeSinceItem {
+  itemId: number;
+  itemName: string;
+  /** null when the item has never been logged */
+  lastTimestampMs: number | null;
 }
 
 /** Fields an item editor writes. */
