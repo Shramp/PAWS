@@ -64,7 +64,10 @@ export default function SettingsScreen() {
   const onImport = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/json',
+        // Android file providers often label .json as octet-stream or
+        // text/plain, which greys the file out under a strict json filter.
+        // parseBackup() validates the contents anyway.
+        type: ['application/json', 'text/plain', 'application/octet-stream', '*/*'],
         copyToCacheDirectory: true,
       });
       if (result.canceled) return;

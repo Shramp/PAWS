@@ -1,4 +1,3 @@
-import DateTimePicker from '@react-native-community/datetimepicker';
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
 import { Alert, StyleSheet, View } from 'react-native';
@@ -8,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Chip } from '@/components/ui/chip';
 import { Sheet } from '@/components/ui/sheet';
 import { TextField } from '@/components/ui/text-field';
+import { TimeField } from '@/components/ui/time-field';
 import { Spacing } from '@/constants/theme';
 import { addIntake, deleteIntake, setDailyTotal, updateIntake } from '@/db/items';
 import { type IntakeEventWithItem, type Item } from '@/db/types';
@@ -164,16 +164,7 @@ function LogIntakeSheetContent({
                   ? `  ·  midnight – ${DAY_START_HOUR} am counts for this night`
                   : ''}
               </ThemedText>
-              <DateTimePicker
-                value={time}
-                mode="time"
-                display="spinner"
-                themeVariant="dark"
-                style={styles.timePicker}
-                onChange={(_, selected) => {
-                  if (selected) setTime(selected);
-                }}
-              />
+              <TimeField value={time} onChange={setTime} />
             </>
           ) : null}
           <Button label={editing ? 'Save changes' : 'Save'} onPress={save} disabled={!valid} />
@@ -189,9 +180,6 @@ function LogIntakeSheetContent({
 }
 
 const styles = StyleSheet.create({
-  timePicker: {
-    alignSelf: 'center',
-  },
   chips: {
     flexDirection: 'row',
     flexWrap: 'wrap',
