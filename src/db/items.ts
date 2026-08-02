@@ -180,13 +180,13 @@ export async function deleteIntake(db: SQLiteDatabase, id: number) {
 
 type IntakeJoinRow = IntakeRow & { item_name: string; unit: string };
 
-/** All intake events for one day, timestamped ones in chronological order. */
+/** All intake events for one day, most recent first; daily totals last. */
 export async function intakeForDate(db: SQLiteDatabase, forDate: string): Promise<IntakeEventWithItem[]> {
   const rows = await db.getAllAsync<IntakeJoinRow>(
     `SELECT e.*, i.name AS item_name, i.unit
      FROM intake_events e JOIN items i ON i.id = e.item_id
      WHERE e.for_date = ?
-     ORDER BY e.timestamp_ms IS NULL, e.timestamp_ms, e.id`,
+     ORDER BY e.timestamp_ms IS NULL, e.timestamp_ms DESC, e.id DESC`,
     forDate,
   );
   return rows.map((row) => ({ ...toIntake(row), itemName: row.item_name, unit: row.unit }));
