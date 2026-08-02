@@ -112,6 +112,11 @@ export default function CalendarScreen() {
           {friendlyDate(selected).toUpperCase()}
         </ThemedText>
 
+        <Button
+          label={`+ Log intake for ${friendlyDate(selected)}`}
+          onPress={() => setSheet({ open: true, editing: null })}
+        />
+
         {/* Same captions as Today: without them an aggregate chip reading
             "Caffeine 215mg" is indistinguishable from an individual entry. */}
         {(data?.totals.length ?? 0) > 0 ? (
@@ -120,11 +125,6 @@ export default function CalendarScreen() {
           </ThemedText>
         ) : null}
         <DailyTotalsChips totals={data?.totals ?? []} />
-
-        <Button
-          label={`+ Log intake for ${friendlyDate(selected)}`}
-          onPress={() => setSheet({ open: true, editing: null })}
-        />
 
         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
           HISTORY
