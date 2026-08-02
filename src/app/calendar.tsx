@@ -121,6 +121,11 @@ export default function CalendarScreen() {
         ) : null}
         <DailyTotalsChips totals={data?.totals ?? []} />
 
+        <Button
+          label={`+ Log intake for ${friendlyDate(selected)}`}
+          onPress={() => setSheet({ open: true, editing: null })}
+        />
+
         <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
           HISTORY
         </ThemedText>
@@ -130,10 +135,6 @@ export default function CalendarScreen() {
             data?.selectedConfirmed ? 'Nothing taken — confirmed. 🐾' : 'Nothing logged this day.'
           }
           onPressEvent={(event) => setSheet({ open: true, editing: event })}
-        />
-        <Button
-          label={`+ Log intake for ${friendlyDate(selected)}`}
-          onPress={() => setSheet({ open: true, editing: null })}
         />
         {data && data.intake.length === 0 && selected <= today ? (
           <Button
