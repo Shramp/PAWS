@@ -180,13 +180,24 @@ export async function deleteIntake(db: SQLiteDatabase, id: number) {
 
 type IntakeJoinRow = IntakeRow & { item_name: string; unit: string };
 
-/** All intake events for one day, most recent first; daily totals last. */
-export async function intakeForDate(db: SQLiteDatabase, forDate: string): Promise<IntakeEventWithItem[]> {
+/**
+ * All intake events for one day. Untimed daily totals always sort last, since
+ * they have no time to place them among the rest.
+ *
+ * `order` is 'newest' on Today (what did I just take?) and 'earliest' on the
+ * Calendar (walk me through that day).
+ */
+export async function intakeForDate(
+  db: SQLiteDatabase,
+  forDate: string,
+  order: 'newest' | 'earliest' = 'newest',
+): Promise<IntakeEventWithItem[]> {
+  const direction = order === 'newest' ? 'DESC' : 'ASC';
   const rows = await db.getAllAsync<IntakeJoinRow>(
     `SELECT e.*, i.name AS item_name, i.unit
      FROM intake_events e JOIN items i ON i.id = e.item_id
      WHERE e.for_date = ?
-     ORDER BY e.timestamp_ms IS NULL, e.timestamp_ms DESC, e.id DESC`,
+     ORDER BY e.timestamp_ms IS NULL, e.timestamp_ms ${direction}, e.id ${direction}`,
     forDate,
   );
   return rows.map((row) => ({ ...toIntake(row), itemName: row.item_name, unit: row.unit }));

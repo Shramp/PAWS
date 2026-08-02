@@ -47,7 +47,7 @@ export default function CalendarScreen() {
         listItems(db),
         datesWithIntake(db, monthStart, monthEnd),
         confirmedDaysInRange(db, monthStart, monthEnd),
-        intakeForDate(db, selected),
+        intakeForDate(db, selected, 'earliest'),
         isDayConfirmed(db, selected),
       ]);
       return {
