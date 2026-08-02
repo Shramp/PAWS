@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
+import { DailyTotalsChips } from '@/components/daily-totals-chips';
 import { LogIntakeSheet } from '@/components/log-intake-sheet';
 import { ThemedText } from '@/components/themed-text';
 import { IntakeList } from '@/components/intake-list';
@@ -12,11 +13,12 @@ import { Screen } from '@/components/ui/screen';
 import { Spacing } from '@/constants/theme';
 import {
   confirmedDaysInRange,
+  dailyTotals,
   datesWithIntake,
+  intakeForDate,
   isDayConfirmed,
   listItems,
   setDayConfirmed,
-  intakeForDate,
 } from '@/db/items';
 import { type IntakeEventWithItem } from '@/db/types';
 import { useDbData } from '@/hooks/use-db-data';
@@ -43,12 +45,13 @@ export default function CalendarScreen() {
 
   const { data, reload, db } = useDbData(
     async (db) => {
-      const [items, markedDates, confirmedDates, intake, selectedConfirmed] = await Promise.all([
+      const [items, markedDates, confirmedDates, intake, selectedConfirmed, totals] = await Promise.all([
         listItems(db),
         datesWithIntake(db, monthStart, monthEnd),
         confirmedDaysInRange(db, monthStart, monthEnd),
         intakeForDate(db, selected, 'earliest'),
         isDayConfirmed(db, selected),
+        dailyTotals(db, selected),
       ]);
       return {
         items,
@@ -56,6 +59,7 @@ export default function CalendarScreen() {
         confirmed: new Set(confirmedDates),
         intake,
         selectedConfirmed,
+        totals,
       };
     },
     [monthStart, monthEnd, selected],
@@ -104,8 +108,21 @@ export default function CalendarScreen() {
             ) : null
           }
         />
-        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+        <ThemedText type="smallBold" style={styles.dayTitle}>
           {friendlyDate(selected).toUpperCase()}
+        </ThemedText>
+
+        {/* Same captions as Today: without them an aggregate chip reading
+            "Caffeine 215mg" is indistinguishable from an individual entry. */}
+        {(data?.totals.length ?? 0) > 0 ? (
+          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+            TOTALS
+          </ThemedText>
+        ) : null}
+        <DailyTotalsChips totals={data?.totals ?? []} />
+
+        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+          HISTORY
         </ThemedText>
         <IntakeList
           events={data?.intake ?? []}
@@ -155,8 +172,14 @@ const styles = StyleSheet.create({
     borderRadius: 4,
     borderWidth: 1.5,
   },
-  sectionTitle: {
-    marginTop: Spacing.three,
+  dayTitle: {
+    marginTop: Spacing.four,
+    fontSize: 17,
     letterSpacing: 1,
+  },
+  sectionTitle: {
+    letterSpacing: 1,
+    // Pull each caption toward the block it labels, against the container gap.
+    marginBottom: -Spacing.one,
   },
 });
