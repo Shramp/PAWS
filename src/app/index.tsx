@@ -68,7 +68,19 @@ export default function TodayScreen() {
       <ScrollView contentContainerStyle={[styles.content, { paddingBottom: bottomPadding }]}>
         <TimeSinceList items={data?.timeSince ?? []} />
         <Button label="+ Log intake" onPress={() => setSheet({ open: true, editing: null })} />
+
+        {/* Captions distinguish the aggregate block from the itemized one:
+            without them "Caffeine 215mg" above "Caffeine 120mg" is ambiguous. */}
+        {(data?.totals.length ?? 0) > 0 ? (
+          <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+            TOTALS
+          </ThemedText>
+        ) : null}
         <DailyTotalsChips totals={data?.totals ?? []} />
+
+        <ThemedText type="smallBold" themeColor="textSecondary" style={styles.sectionTitle}>
+          HISTORY
+        </ThemedText>
         <IntakeList
           events={data?.intake ?? []}
           emptyLabel={data?.confirmed ? 'Nothing taken — confirmed. 🐾' : 'Nothing logged today.'}
@@ -113,5 +125,10 @@ const styles = StyleSheet.create({
   content: {
     padding: Spacing.three,
     gap: Spacing.three,
+  },
+  sectionTitle: {
+    letterSpacing: 1,
+    // Pull each caption toward the block it labels, against the container gap.
+    marginBottom: -Spacing.two,
   },
 });
