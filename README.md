@@ -10,19 +10,15 @@ PAWS could stand for:
 ## What it does
 
 - **Log intake** — timestamp (now or manual, via the native wheel picker), amount, and administration route per item. Every entry can be backdated from the Calendar tab, and tapping an existing entry edits or deletes it.
-- **Items are config** — each has its own unit (mg, ml, …), an optional usual amount that pre-fills when logging, and routes (asked when logging only if it has more than one). An item can be flagged *daily-total-only*: one amount per day, no timestamps.
+- **Items are config** — each has its own unit (mg, ml, …), an optional default amount that pre-fills when logging, and routes (asked when logging only if it has more than one). An item can be flagged _daily-total-only_: one amount per day, no timestamps.
 - **Days run 7am → 7am** — late-night activity belongs to the day you were awake for, so 3am on the 24th counts toward the 23rd. Every total, week, and chart honors this.
-- **Nothing-taken days are data** — mark a day as explicitly zero, so "I took nothing" is distinguishable from "I wasn't tracking." A day counts as *tracked* if it has any entry or that mark; per item, zeros only count from that item's first-ever entry onward.
+- **Nothing-taken days are data** — mark a day as explicitly zero, so "I took nothing" is distinguishable from "I wasn't tracking." A day counts as _tracked_ if it has any entry or that mark; per item, zeros only count from that item's first-ever entry onward.
 - **Views** — Today (timeline for today), Calendar (month grid of paw prints, tap any day to review or backfill), Trends (per-item bar chart over 30/60/90 days or 12/26/52 weeks, with totals and averages over tracked periods only).
 - **Your data stays yours** — JSON backup export/import (for moving to a new install) and a one-way CSV summary of daily/weekly totals for spreadsheets.
-
-Earlier iterations included general daily trackers (sleep, exercise, mood, …) and a todo list — descoped but recoverable from git history (`640dac9` and earlier).
 
 ## Stack
 
 Expo SDK 57 · React Native · TypeScript · expo-router (native tabs) · expo-sqlite
-
-The UI is always-dark: a plum gradient with liquid-glass cards on iOS 26+ (solid cards elsewhere), pastel pink for intake and pastel teal for confirmed zeros.
 
 ## Development
 
@@ -31,7 +27,7 @@ npm install
 npm run ios    # boots the iPhone 13 Pro simulator, starts Metro on port 8090
 ```
 
-Metro runs on port 8090 (8081 is taken on the author's machine). `shift+i` in the Metro terminal picks a different simulator.
+Metro runs on port 8090 by default. `shift+i` in the Metro terminal picks a different simulator.
 
 Checks:
 
@@ -53,7 +49,6 @@ src/
 scripts/
   gen-icons.mjs      # regenerates the paw icon set (needs @resvg/resvg-js)
   seed-demo.mjs      # generates importable demo data (see below)
-  convert-backup.mjs # one-off: converts pre-rename backups to the current format
 ```
 
 ### Demo data
