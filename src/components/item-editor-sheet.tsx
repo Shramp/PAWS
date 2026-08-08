@@ -83,8 +83,17 @@ function ItemEditorSheetContent({
     onClose();
   };
 
+  const footer = (
+    <>
+      <Button label={item ? 'Save changes' : 'Create item'} onPress={save} disabled={!valid} />
+      {item ? (
+        <Button label={item.archived ? 'Unarchive' : 'Archive'} variant="secondary" onPress={toggleArchive} />
+      ) : null}
+    </>
+  );
+
   return (
-    <Sheet visible onClose={onClose} title={item ? 'Edit item' : 'New item'}>
+    <Sheet visible onClose={onClose} title={item ? 'Edit item' : 'New item'} footer={footer} scrollable>
       <TextField label="Name" value={name} onChangeText={setName} placeholder="e.g. Caffeine" />
       <TextField label="Unit" value={unit} onChangeText={setUnit} placeholder="mg" autoCapitalize="none" />
       <TextField
@@ -132,11 +141,6 @@ function ItemEditorSheetContent({
             trackColor={{ true: theme.accent }}
           />
         </View>
-      ) : null}
-
-      <Button label={item ? 'Save changes' : 'Create item'} onPress={save} disabled={!valid} />
-      {item ? (
-        <Button label={item.archived ? 'Unarchive' : 'Archive'} variant="secondary" onPress={toggleArchive} />
       ) : null}
     </Sheet>
   );

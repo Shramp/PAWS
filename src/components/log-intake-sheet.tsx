@@ -8,7 +8,7 @@ import { Chip } from '@/components/ui/chip';
 import { Sheet } from '@/components/ui/sheet';
 import { TextField } from '@/components/ui/text-field';
 import { TimeField } from '@/components/ui/time-field';
-import { Spacing } from '@/constants/theme';
+import { Colors, Spacing } from '@/constants/theme';
 import { addIntake, deleteIntake, setDailyTotal, updateIntake } from '@/db/items';
 import { type IntakeEventWithItem, type Item } from '@/db/types';
 import { DAY_START_HOUR, parseDateKey, timestampForDayAndTime, todayKey } from '@/lib/dates';
@@ -121,8 +121,21 @@ function LogIntakeSheetContent({
 
   const title = editing ? `Edit ${editing.itemName}` : item ? item.name : 'Log intake';
 
+  // Only shown once an item is chosen; the picker step needs no actions.
+  const footer = item ? (
+    <>
+      <Button label={editing ? 'Save changes' : 'Save'} onPress={save} disabled={!valid} />
+      {editing ? (
+        <Button label="Delete entry" variant="danger" onPress={confirmDelete} />
+      ) : (
+        <Button label="Back" variant="secondary" onPress={() => setItem(null)} />
+      )}
+    </>
+  ) : null;
+
   return (
-    <Sheet visible onClose={onClose} title={title}>
+    // The picker step can list many items; the form step always fits.
+    <Sheet visible onClose={onClose} title={title} footer={footer} scrollable={!item}>
       {items.length === 0 ? (
         <ThemedText themeColor="textSecondary">
           Nothing set up yet — add items in Settings.
@@ -146,10 +159,10 @@ function LogIntakeSheetContent({
           />
           {needsRoute ? (
             <>
-              <ThemedText type="small" themeColor="textSecondary">
-                Route
+              <ThemedText type="small" themeColor={route === null ? 'accent' : 'textSecondary'}>
+                {route === null ? 'Route — pick one to save' : 'Route'}
               </ThemedText>
-              <View style={styles.chips}>
+              <View style={[styles.chips, route === null && styles.chipsRequired]}>
                 {item.routes.map((r) => (
                   <Chip key={r} label={r} selected={route === r} onPress={() => setRoute(r)} />
                 ))}
@@ -157,22 +170,16 @@ function LogIntakeSheetContent({
             </>
           ) : null}
           {needsTime ? (
-            <>
-              <ThemedText type="small" themeColor="textSecondary">
-                Time
-                {time.getHours() < DAY_START_HOUR
-                  ? `  ·  midnight – ${DAY_START_HOUR} am counts for this night`
-                  : ''}
-              </ThemedText>
-              <TimeField value={time} onChange={setTime} />
-            </>
+            <TimeField
+              value={time}
+              onChange={setTime}
+              hint={
+                time.getHours() < DAY_START_HOUR
+                  ? `midnight – ${DAY_START_HOUR} am counts for this night`
+                  : undefined
+              }
+            />
           ) : null}
-          <Button label={editing ? 'Save changes' : 'Save'} onPress={save} disabled={!valid} />
-          {editing ? (
-            <Button label="Delete entry" variant="danger" onPress={confirmDelete} />
-          ) : (
-            <Button label="Back" variant="secondary" onPress={() => setItem(null)} />
-          )}
         </>
       )}
     </Sheet>
@@ -184,5 +191,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  /** Ring around the route chips while the required choice is unmade. */
+  chipsRequired: {
+    borderWidth: 1,
+    borderColor: Colors.dark.accent,
+    borderRadius: 999,
+    borderStyle: 'dashed',
+    padding: Spacing.one,
+    margin: -Spacing.one,
   },
 });
