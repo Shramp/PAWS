@@ -10,7 +10,7 @@ PAWS could stand for:
 ## What it does
 
 - **Log intake** — timestamp (now or manual, via the native wheel picker), amount, and administration route per item. Every entry can be backdated from the Calendar tab, and tapping an existing entry edits or deletes it.
-- **Items are config** — each has its own unit (mg, ml, …), an optional default amount that pre-fills when logging, and routes (asked when logging only if it has more than one). An item can be flagged _daily-total-only_: one amount per day, no timestamps.
+- **Items are config** — each has its own unit (mg, ml, …), an optional default amount that pre-fills when logging, and routes — oral and nasal are offered by default, and you can add your own (asked when logging only if it has more than one). An item can be flagged _daily-total-only_: one amount per day, no timestamps.
 - **Days run 7am → 7am** — late-night activity belongs to the day you were awake for, so 3am on the 24th counts toward the 23rd. Every total, week, and chart honors this.
 - **Nothing-taken days are data** — mark a day as explicitly zero, so "I took nothing" is distinguishable from "I wasn't tracking." A day counts as _tracked_ if it has any entry or that mark; per item, zeros only count from that item's first-ever entry onward.
 - **Views** — Today (timeline for today), Calendar (month grid of paw prints, tap any day to review or backfill), Trends (per-item bar chart over 30/60/90 days or 12/26/52 weeks, with totals and averages over tracked periods only).

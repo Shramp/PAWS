@@ -1,6 +1,6 @@
 import { useSQLiteContext } from 'expo-sqlite';
 import { useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { StyleSheet, Switch, TextInput, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,8 @@ export function ItemEditorSheet({
   visible: boolean;
   /** null → creating a new item */
   item: Item | null;
+  /** Routes any item already uses, so custom ones can be reused. */
+  knownRoutes: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -30,10 +32,12 @@ export function ItemEditorSheet({
 
 function ItemEditorSheetContent({
   item,
+  knownRoutes,
   onClose,
   onSaved,
 }: {
   item: Item | null;
+  knownRoutes: string[];
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -47,9 +51,24 @@ function ItemEditorSheetContent({
     item?.defaultAmount !== null && item?.defaultAmount !== undefined ? String(item.defaultAmount) : '',
   );
   const [trackTimeSince, setTrackTimeSince] = useState(item?.trackTimeSince ?? false);
+  const [customRoute, setCustomRoute] = useState('');
+  // Routes added in this session but not yet saved, so they stay visible after deselecting.
+  const [addedRoutes, setAddedRoutes] = useState<string[]>([]);
+
+  const routeChoices = Array.from(
+    new Set([...ADMINISTRATION_ROUTES, ...knownRoutes, ...(item?.routes ?? []), ...addedRoutes]),
+  );
 
   const toggleRoute = (route: string) => {
     setRoutes((prev) => (prev.includes(route) ? prev.filter((r) => r !== route) : [...prev, route]));
+  };
+
+  const addCustomRoute = () => {
+    const route = customRoute.trim().toLowerCase();
+    if (!route) return;
+    setAddedRoutes((prev) => (prev.includes(route) ? prev : [...prev, route]));
+    setRoutes((prev) => (prev.includes(route) ? prev : [...prev, route]));
+    setCustomRoute('');
   };
 
   const parsedDefault = parseFloat(defaultAmountText.replace(',', '.'));
@@ -111,9 +130,23 @@ function ItemEditorSheetContent({
         Routes (pick all that apply — asked when logging only if more than one)
       </ThemedText>
       <View style={styles.chips}>
-        {ADMINISTRATION_ROUTES.map((route) => (
+        {routeChoices.map((route) => (
           <Chip key={route} label={route} selected={routes.includes(route)} onPress={() => toggleRoute(route)} />
         ))}
+      </View>
+      <View style={styles.addRouteRow}>
+        <TextInput
+          value={customRoute}
+          onChangeText={setCustomRoute}
+          onSubmitEditing={addCustomRoute}
+          placeholder="Add your own route…"
+          placeholderTextColor={theme.textSecondary}
+          autoCapitalize="none"
+          autoCorrect={false}
+          returnKeyType="done"
+          style={[styles.addRouteInput, { color: theme.text, backgroundColor: theme.backgroundElement }]}
+        />
+        <Button label="Add" variant="secondary" onPress={addCustomRoute} disabled={!customRoute.trim()} />
       </View>
 
       <View style={styles.switchRow}>
@@ -151,6 +184,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.two,
+  },
+  addRouteRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  addRouteInput: {
+    flex: 1,
+    borderRadius: Spacing.two,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: 10,
+    fontSize: 16,
   },
   switchRow: {
     flexDirection: 'row',

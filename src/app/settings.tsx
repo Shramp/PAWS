@@ -145,6 +145,7 @@ export default function SettingsScreen() {
       <ItemEditorSheet
         visible={sheet.open}
         item={sheet.item}
+        knownRoutes={(items ?? []).flatMap((i) => i.routes)}
         onClose={() => setSheet({ open: false, item: null })}
         onSaved={reload}
       />

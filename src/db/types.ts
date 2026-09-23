@@ -47,4 +47,6 @@ export interface ItemTotal {
   total: number;
 }
 
-export const ADMINISTRATION_ROUTES = ['nasal', 'oral', 'rectal', 'vape', 'pouch', 'patch'];
+// Only the defaults offered to a new item. Routes are stored as free text per
+// item and per entry, so users can add their own and older data keeps working.
+export const ADMINISTRATION_ROUTES = ['oral', 'nasal'];
