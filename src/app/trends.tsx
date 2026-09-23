@@ -167,7 +167,7 @@ export default function TrendsScreen() {
             </ThemedText>
           ) : grandTotal === 0 ? (
             <ThemedText themeColor="textSecondary">
-              No usage logged for {item.name} in the last {count} {mode === 'days' ? 'days' : 'weeks'}.
+              Nothing logged for {item.name} in the last {count} {mode === 'days' ? 'days' : 'weeks'}.
             </ThemedText>
           ) : (
             <>

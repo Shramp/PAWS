@@ -77,7 +77,8 @@ All dates are local-timezone `YYYY-MM-DD` keys; entries are keyed by the day the
 
 ## Installing on a phone
 
-- **iOS**: `npx expo run:ios --device --configuration Release` with the iPhone plugged in (needs Xcode; free Apple ID = 7-day resign, paid developer account = 1 year).
+- **iOS via TestFlight** (preferred): `eas build --platform ios --profile production --auto-submit` builds in Expo's cloud and uploads to App Store Connect. Set `submit.production.ios.ascAppId` in `eas.json` to the app's Apple ID from App Store Connect first. Internal testers get builds with no review; the first build to an external group goes through Beta App Review. `PRIVACY.md` is the privacy policy URL for App Store Connect.
+- **iOS via cable**: `npx expo run:ios --device --configuration Release` with the iPhone plugged in (needs Xcode; free Apple ID = 7-day resign, paid developer account = 1 year).
 - **Android**: `npx eas-cli build --platform android --profile preview` builds an APK in Expo's cloud (no local Android SDK needed) and returns a download link plus a QR code on the build page. Open it on the phone to install; Android asks once to allow installs from that source. APKs don't expire, and Expo manages the signing keystore.
 
 Expo Go can't run this project on a physical device — the store builds are pinned to SDK 54 while this is SDK 57. The simulator is fine.

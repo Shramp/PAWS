@@ -86,7 +86,7 @@ export default function SettingsScreen() {
                 reload();
                 Alert.alert(
                   'Import complete',
-                  `Restored ${counts.items} items, ${counts.events} usage entries, and ${counts.days} no-use days.`,
+                  `Restored ${counts.items} items, ${counts.events} entries, and ${counts.days} nothing-taken days.`,
                 );
               } catch (e) {
                 Alert.alert('Import failed', e instanceof Error ? e.message : String(e));

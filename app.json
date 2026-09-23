@@ -9,7 +9,10 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "icon": "./assets/images/icon.png",
-      "bundleIdentifier": "com.shramp.paws"
+      "bundleIdentifier": "com.shramp.paws",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
